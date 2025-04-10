@@ -15,6 +15,7 @@ const itemRoutes = require('./routes/itemRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const ledgerEntryRoutes = require('./routes/ledgerEntryRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const businessSettingRoutes = require('./routes/businessSettingRoutes');
 
 // --- Connect to Database (Test Connection) ---
 connectDB();
@@ -38,6 +39,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/ledger', ledgerEntryRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/settings', businessSettingRoutes);
 
 // --- Centralized Error Handling (Placeholder) ---
 // app.use((err, req, res, next) => { ... });
