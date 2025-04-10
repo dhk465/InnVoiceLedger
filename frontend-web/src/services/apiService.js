@@ -30,8 +30,19 @@ export const getItems = async () => {
   }
 };
 
+// Function to create a new item
+export const createItem = async (itemData) => {
+  try {
+    const response = await apiClient.post('/items', itemData); // Makes POST request
+    return response.data; // Return the newly created item data
+  } catch (error) {
+    console.error('Error creating item:', error);
+    // Re-throw the error so the form can catch it and display messages
+    throw error;
+  }
+};
+
 // --- Add functions for other endpoints later ---
-// export const createItem = async (itemData) => { ... apiClient.post('/items', itemData) ... };
 // export const getCustomers = async () => { ... apiClient.get('/customers') ... };
 // export const createCustomer = async (customerData) => { ... apiClient.post('/customers', customerData) ... };
 // export const getLedgerEntries = async (params) => { ... apiClient.get('/ledger', { params }) ... };

@@ -1,67 +1,73 @@
 // backend/models/Item.js
 const { DataTypes, Model } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { sequelize } = require('../config/database'); // Ensure this path is correct
 
 class Item extends Model {
-  // --- ADD THIS METHOD ---
   // Static method to define associations
   static associate(models) {
     // An item type can appear in many ledger entries
     this.hasMany(models.LedgerEntry, {
-      foreignKey: 'itemId', // fk column in LedgerEntry table
-      as: 'ledgerEntries'      // Alias to use when eager loading
+      foreignKey: 'itemId',
+      as: 'ledgerEntries'
     });
   }
-  // --- END OF ADDED METHOD ---
-
-  // ... (rest of Item class definition: init method) ...
 }
 
 Item.init({
   // Model attributes correspond to table columns
   id: {
     type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4, // Automatically generate UUIDs
+    defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
     allowNull: false,
   },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: { // Example server-side validation
+    validate: {
       notEmpty: { msg: "Item name cannot be empty" },
     }
   },
   description: {
     type: DataTypes.TEXT,
-    allowNull: true, // Description is optional
+    allowNull: true,
   },
   category: {
     type: DataTypes.STRING,
-    allowNull: true, // Category is optional for now
+    allowNull: true,
   },
   sku: {
     type: DataTypes.STRING,
     allowNull: true,
-    unique: { // Add unique constraint message
+    unique: {
         msg: "SKU must be unique."
     }
   },
-  // Use camelCase here, Sequelize maps it to snake_case in DB via underscored: true
   unitPriceWithoutVAT: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    field: 'unit_price_without_vat', // <--- Add this line
+    field: 'unit_price_without_vat',
     validate: {
       isDecimal: { msg: "Unit price must be a decimal number" },
       min: { args: [0], msg: "Unit price cannot be negative" }
     }
   },
+  // --- ADDED CURRENCY FIELD ---
+  currency: {
+    type: DataTypes.STRING(3), // Store 3-letter ISO 4217 code
+    allowNull: false,
+    validate: {
+      isUppercase: { msg: "Currency code must be uppercase" },
+      len: { args: [3,3], msg: "Currency code must be 3 letters" }
+    }
+    // No 'field' needed if column name matches attribute name (currency)
+  },
+  // --- END ADDED CURRENCY FIELD ---
   vatRate: {
     type: DataTypes.DECIMAL(5, 2),
     allowNull: false,
     defaultValue: 0.00,
-    field: 'vat_rate', // <--- Add this line
+    field: 'vat_rate',
     validate: {
       isDecimal: { msg: "VAT rate must be a decimal number" },
       min: { args: [0], msg: "VAT rate cannot be negative" }
@@ -72,22 +78,15 @@ Item.init({
     allowNull: false,
     defaultValue: 'pcs'
   },
-  // createdAt and updatedAt are automatically managed by Sequelize if timestamps: true
-  // No need to define them here unless you want to customize their column names (which we did via underscored: true)
+  // createdAt and updatedAt managed by Sequelize
 
 }, {
   // --- Other model options ---
-  sequelize,                // Pass the connection instance
-  modelName: 'Item',        // The name of the model
-  tableName: 'items',       // Explicitly define table name (matches migration)
-  timestamps: true,         // Enable createdAt and updatedAt fields
-  underscored: true,        // Use snake_case for automatically added fields (createdAt, updatedAt)
-                            // AND for mapping camelCase attributes (like unitPriceWithoutVAT)
-                            // to snake_case columns (unit_price_without_vat) in SQL queries.
-  // paranoid: true,        // Optional: Enable soft deletes (adds deletedAt column)
+  sequelize,
+  modelName: 'Item',
+  tableName: 'items',
+  timestamps: true,
+  underscored: true,
 });
 
-// Optional: Define associations later (e.g., if an Item belongs to a User)
-// Item.belongsTo(User, { foreignKey: 'userId' });
-
-module.exports = Item; // Export the model for use in controllers
+module.exports = Item;

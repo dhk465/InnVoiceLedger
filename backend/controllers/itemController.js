@@ -1,38 +1,38 @@
-const { Item } = require('../models'); // Import Item model from central db export
+// backend/controllers/itemController.js
+const { Item } = require('../models'); // Uses central export
 
 // @desc    Create a new Item
 // @route   POST /api/items
 // @access  Public (for now)
 const createItem = async (req, res) => {
   try {
-    // Get data from request body
     const {
-      name,
-      description,
-      category,
-      sku,
-      unitPriceWithoutVAT, // Expect camelCase from JSON request
-      vatRate,             // Expect camelCase from JSON request
-      unit
+      name, description, category, sku,
+      unitPriceWithoutVAT, currency, // <-- Expect currency in body
+      vatRate, unit
     } = req.body;
 
-    // Basic validation
-    if (name === undefined || unitPriceWithoutVAT === undefined || vatRate === undefined) {
-      return res.status(400).json({ message: 'Missing required fields: name, unitPriceWithoutVAT, vatRate' });
+    // --- Updated Validation ---
+    if (name === undefined || unitPriceWithoutVAT === undefined || currency === undefined || vatRate === undefined) {
+      return res.status(400).json({ message: 'Missing required fields: name, unitPriceWithoutVAT, currency, vatRate' });
     }
     if (name.trim() === '') {
-        return res.status(400).json({ message: 'Item name cannot be empty' });
+      return res.status(400).json({ message: 'Item name cannot be empty' });
     }
+    if (!currency || currency.trim().length !== 3) {
+       return res.status(400).json({ message: 'Currency must be a 3-letter code (e.g., CZK, EUR).' });
+    }
+    // --- End Updated Validation ---
 
-    // Create new item instance using model fields (which are camelCase)
     const newItem = await Item.create({
       name: name.trim(),
       description,
       category,
       sku: sku ? sku.trim() : null,
       unitPriceWithoutVAT,
+      currency: currency.trim().toUpperCase(), // <-- Pass currency to create
       vatRate,
-      unit // Will use default 'pcs' from model if not provided
+      unit
     });
 
     res.status(201).json(newItem);
@@ -59,7 +59,7 @@ const createItem = async (req, res) => {
 const getAllItems = async (req, res) => {
   try {
     const items = await Item.findAll({
-      order: [['name', 'ASC']] // Optional: Order items alphabetically by name
+      order: [['name', 'ASC']]
     });
     res.status(200).json(items);
   } catch (error) {
@@ -67,8 +67,6 @@ const getAllItems = async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching items' });
   }
 };
-
-// TODO: Add getItemById, updateItem, deleteItem later
 
 module.exports = {
   createItem,

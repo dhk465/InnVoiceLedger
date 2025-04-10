@@ -1,0 +1,108 @@
+.pageContainer {
+    padding: 1rem;
+    /* background-color: #ffffff; */ /* Optional: ensure page background is white if body isn't */
+  }
+  
+  .header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .header h2 {
+      margin-bottom: 0.5rem;
+      color: #212529; /* Ensure heading color */
+  }
+  
+  .header p {
+      color: #495057; /* Ensure paragraph color */
+  }
+  
+  
+  .addItemButton {
+    background-color: #007bff; /* Primary blue */
+    color: #ffffff; /* White text */
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.2s ease-in-out;
+  }
+  .addItemButton:hover,
+  .addItemButton:focus {
+    background-color: #0056b3; /* Darker blue */
+    outline: none;
+  }
+  
+  
+  .itemsTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07); /* Slightly softer shadow */
+    background-color: #ffffff; /* Ensure table background is white */
+  }
+  
+  .itemsTable th,
+  .itemsTable td {
+    border: 1px solid #dee2e6; /* Light gray border */
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+    color: #212529; /* Default dark text for all cells */
+  }
+  
+  .itemsTable th {
+    background-color: #f8f9fa; /* Very light gray header */
+    font-weight: 600;
+    color: #212529; /* Explicit dark color for header text */
+  }
+  
+  .itemsTable tbody tr {
+      background-color: #ffffff; /* Ensure default row background is white */
+  }
+  
+  /* Remove alternating row color for simplicity for now */
+  /* .itemsTable tbody tr:nth-child(odd) {
+    background-color: #fdfdfe;
+  } */
+  
+  .itemsTable tbody tr:hover {
+    background-color: #f1f3f5; /* Light gray hover */
+  }
+  
+  /* --- Add rules for text alignment --- */
+  .itemsTable td:nth-child(3), /* Price (excl. VAT) column */
+  .itemsTable td:nth-child(4), /* Price (incl. VAT) column */
+  .itemsTable td:nth-child(5)  /* VAT Rate column */
+  {
+    text-align: right;
+  }
+  /* --- End text alignment rules --- */
+  
+  
+  .noItemsRow td {
+      text-align: center;
+      font-style: italic;
+      color: #6c757d; /* Medium gray */
+      padding: 1.5rem;
+      background-color: #ffffff; /* Ensure background is white */
+  }
+  
+  .errorMesssage {
+      color: #721c24; /* Darker red text for better contrast */
+      background-color: #f8d7da; /* Light red background */
+      border: 1px solid #f5c6cb;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem; /* Add margin */
+  }
+  
+  .loadingMessage {
+      font-style: italic;
+      color: #6c757d;
+      padding: 1rem;
+  }

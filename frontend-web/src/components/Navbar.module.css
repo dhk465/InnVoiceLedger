@@ -1,38 +1,37 @@
-
 .navbar {
-    background-color: #e9ecef; /* Lighter gray */
-    padding: 0.75rem 1.5rem; /* Use rem units for scalability */
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #dee2e6; /* Subtle border */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Subtle shadow */
-  }
-  
-  .navList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    gap: 1.5rem; /* Increased spacing */
-  }
-  
-  .navLink {
-    text-decoration: none;
-    color: #495057; /* Darker gray for text */
-    font-weight: 500; /* Slightly less bold than 'bold' */
-    font-size: 1.1rem; /* Slightly larger font */
-    padding: 0.5rem 0; /* Add some vertical padding for click area */
-    transition: color 0.2s ease-in-out; /* Smooth transition */
-    border-bottom: 2px solid transparent; /* Placeholder for active state */
-  }
-  
-  .navLink:hover,
-  .navLink:focus { /* Add focus state for keyboard navigation */
-    color: #007bff; /* Standard blue for hover/focus */
-    outline: none; /* Remove default outline if adding custom focus style */
-  }
-  
-  /* Example active link style - requires NavLink component from react-router-dom */
-  .navLinkActive {
-    color: #0056b3; /* Darker blue */
-    border-bottom-color: #0056b3; /* Underline for active link */
-  }
+  background-color: #f1f3f5; /* New: Slightly darker off-white/gray */
+  padding: 0.75rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03); /* Soften shadow */
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navLink {
+  text-decoration: none;
+  color: #495057; /* Keep dark gray text */
+  font-weight: 500;
+  font-size: 1.1rem;
+  padding: 0.5rem 0;
+  transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  border-bottom: 2px solid transparent;
+  display: inline-block;
+}
+
+.navLink:hover,
+.navLink:focus {
+  color: #007bff; /* Primary blue hover/focus */
+  outline: none;
+}
+
+.navLinkActive {
+  color: #0056b3; /* Darker blue active */
+  border-bottom-color: #0056b3;
+}
