@@ -4,12 +4,8 @@ const { sequelize } = require('../config/database');
 
 class InvoiceItem extends Model {
   static associate(models) {
-    // Each InvoiceItem belongs to one Invoice
-    this.belongsTo(models.Invoice, {
-      foreignKey: 'invoiceId',
-      as: 'invoice'
-    });
-    // Optional: Link back to the original Item definition if needed, but mainly rely on snapshot data
+    this.belongsTo(models.Invoice, { foreignKey: 'invoiceId', as: 'invoice' });
+    // Optional: Link back to Item
     // this.belongsTo(models.Item, { foreignKey: 'originalItemId', as: 'originalItem' });
   }
 }
@@ -21,62 +17,82 @@ InvoiceItem.init({
     primaryKey: true,
     allowNull: false,
   },
-  invoiceId: { // Foreign key to Invoice
+  invoiceId: {
     type: DataTypes.UUID,
     allowNull: false,
     field: 'invoice_id',
     // references added in migration
   },
   // --- Snapshot data from the time of invoicing ---
-  description: { // Copied from Item name/description or Ledger notes
+  description: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   quantity: {
-    type: DataTypes.DECIMAL(10, 2), // Use DECIMAL to allow fractional quantities if needed (e.g., 1.5 hours)
+    type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
   },
-  unit: { // e.g., pcs, hour, night
+  unit: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  unitPriceWithoutVAT: {
+  // --- Original Values (From Ledger Entry/Item) ---
+  originalUnitPriceWithoutVAT: { // Renamed for clarity
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      field: 'original_unit_price_without_vat'
+  },
+  originalCurrency: { // Store the original currency of the ledger entry item
+      type: DataTypes.STRING(3),
+      allowNull: false,
+      field: 'original_currency'
+  },
+  originalVatRate: { // Renamed for clarity (was just vatRate)
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
+      field: 'original_vat_rate'
+  },
+  // --- Conversion Info (If applicable) ---
+  exchangeRateUsed: { // Rate used to convert from original to invoice currency
+      type: DataTypes.DECIMAL(14, 6), // Store rate with precision
+      allowNull: true, // Null if originalCurrency === invoiceCurrency
+      field: 'exchange_rate_used'
+  },
+  // --- Converted Values (In Invoice Currency) ---
+  // These replace the previous single price/vat fields
+  unitPriceWithoutVAT: { // Price per unit IN INVOICE CURRENCY
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
-    field: 'unit_price_without_vat'
+    field: 'unit_price_without_vat' // Keep same name, now represents converted price
   },
-  vatRate: { // VAT rate percentage applied to this line
+   vatRate: { // VAT Rate applied (usually same as original, but store explicitly)
     type: DataTypes.DECIMAL(5, 2),
     allowNull: false,
     field: 'vat_rate'
   },
-  // --- Calculated amounts for this line ---
-  lineTotalWithoutVAT: { // quantity * unitPriceWithoutVAT
+  // --- Calculated amounts for this line (IN INVOICE CURRENCY) ---
+  lineTotalWithoutVAT: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       field: 'line_total_without_vat'
   },
-  lineVATAmount: { // lineTotalWithoutVAT * (vatRate / 100)
+  lineVATAmount: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       field: 'line_vat_amount'
   },
-  lineTotalWithVAT: { // lineTotalWithoutVAT + lineVATAmount
+  lineTotalWithVAT: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
       field: 'line_total_with_vat'
   },
-  // originalItemId: { // Optional: Link back to the Item ID if needed for reporting
-  //   type: DataTypes.UUID,
-  //   allowNull: true,
-  //   field: 'original_item_id',
-  // }
+  // --- Optional originalItemId ---
   // createdAt, updatedAt managed by Sequelize
 }, {
   sequelize,
   modelName: 'InvoiceItem',
   tableName: 'invoice_items',
-  timestamps: true, // Keep timestamps for audit purposes
+  timestamps: true,
   underscored: true,
 });
 
