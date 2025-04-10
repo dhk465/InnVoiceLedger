@@ -1,22 +1,28 @@
 // backend/models/LedgerEntry.js
 const { DataTypes, Model } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { sequelize } = require('../config/database'); // Ensure path is correct
 
 class LedgerEntry extends Model {
   // Static method to define associations
   static associate(models) {
     // An entry belongs to one Customer
     this.belongsTo(models.Customer, {
-      foreignKey: 'customerId', // fk column in this table
-      as: 'customer'         // Alias to use when eager loading
+      foreignKey: 'customerId',
+      as: 'customer'
     });
     // An entry references one Item type
     this.belongsTo(models.Item, {
-      foreignKey: 'itemId',     // fk column in this table
-      as: 'item'             // Alias to use when eager loading
+      foreignKey: 'itemId',
+      as: 'item'
     });
-    // An entry might belong to one Invoice (define later)
-    // this.belongsTo(models.Invoice, { foreignKey: 'invoiceId', as: 'invoice' });
+    // --- UPDATED: ADD ASSOCIATION ---
+    // A billed entry belongs to one Invoice
+    this.belongsTo(models.Invoice, {
+      foreignKey: 'invoiceId', // This FK needs to be added via migration
+      as: 'invoice',
+      allowNull: true // Important: Entry is not initially linked to an invoice
+    });
+    // --- END ASSOCIATION ---
   }
 }
 
@@ -27,47 +33,45 @@ LedgerEntry.init({
     primaryKey: true,
     allowNull: false,
   },
-  // Foreign Keys will be added via associations or explicitly here/in migration
   customerId: {
     type: DataTypes.UUID,
     allowNull: false,
-    field: 'customer_id', // Explicit snake_case mapping
-    // 'references' defined in migration for constraint
+    field: 'customer_id',
+    // 'references' defined in migration
   },
   itemId: {
     type: DataTypes.UUID,
     allowNull: false,
-    field: 'item_id', // Explicit snake_case mapping
-    // 'references' defined in migration for constraint
+    field: 'item_id',
+    // 'references' defined in migration
   },
   quantity: {
-    type: DataTypes.INTEGER, // Or DECIMAL if fractional quantities needed
+    type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 1,
     validate: {
-      isInt: { msg: "Quantity must be an integer" }, // Adjust if DECIMAL
-      min: { args: [1], msg: "Quantity must be at least 1" }, // Adjust if zero/negative allowed
+      isInt: { msg: "Quantity must be an integer" },
+      min: { args: [1], msg: "Quantity must be at least 1" },
     }
   },
-  entryDate: { // When the item/service was consumed/used
-    type: DataTypes.DATE, // Timestamp with time zone
+  entryDate: {
+    type: DataTypes.DATE,
     allowNull: false,
-    defaultValue: DataTypes.NOW, // Default to time of creation
+    defaultValue: DataTypes.NOW,
     field: 'entry_date'
   },
-  // Store price/VAT at time of entry for historical accuracy
   recordedPriceWithoutVAT: {
     type: DataTypes.DECIMAL(10, 2),
-    allowNull: false, // Or true if you want to allow falling back to item's current price
+    allowNull: false,
     field: 'recorded_price_without_vat',
-    validate: { // Basic validation
+    validate: {
         isDecimal: true,
         min: 0
     }
   },
   recordedVatRate: {
     type: DataTypes.DECIMAL(5, 2),
-    allowNull: false, // Or true
+    allowNull: false,
     field: 'recorded_vat_rate',
      validate: {
         isDecimal: true,
@@ -75,20 +79,23 @@ LedgerEntry.init({
     }
   },
   billingStatus: {
-    type: DataTypes.STRING, // Or DataTypes.ENUM('unbilled', 'billed', 'paid')
+    type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'unbilled',
     field: 'billing_status',
     validate: {
-      isIn: [['unbilled', 'billed', 'paid']] // Ensure valid status
+      isIn: [['unbilled', 'billed', 'paid']]
     }
   },
-  invoiceId: { // Link to the Invoice table (for later)
+  // --- UPDATED: Add invoiceId field definition ---
+  // This field links the ledger entry to an invoice once billed
+  invoiceId: {
     type: DataTypes.UUID,
-    allowNull: true, // Null until billed
+    allowNull: true, // Starts null
     field: 'invoice_id',
-    // 'references' defined in migration
+    // Foreign key constraint added via migration
   },
+  // --- END UPDATE ---
   notes: {
     type: DataTypes.TEXT,
     allowNull: true,

@@ -1,17 +1,22 @@
 // backend/models/Customer.js
 const { DataTypes, Model } = require('sequelize');
-const { sequelize } = require('../config/database');
+const { sequelize } = require('../config/database'); // Ensure path is correct
 
 class Customer extends Model {
   // Static method to define associations
   static associate(models) {
     // A customer can have many ledger entries
     this.hasMany(models.LedgerEntry, {
-      foreignKey: 'customerId', // fk column in LedgerEntry table
-      as: 'ledgerEntries'      // Alias to use when eager loading
+      foreignKey: 'customerId',
+      as: 'ledgerEntries'
     });
-    // A customer can have many invoices (define later)
-    // this.hasMany(models.Invoice, { foreignKey: 'customerId', as: 'invoices' });
+    // --- UPDATED: ADD ASSOCIATION ---
+    // A customer can have many invoices
+    this.hasMany(models.Invoice, {
+      foreignKey: 'customerId',
+      as: 'invoices'
+    });
+    // --- END ASSOCIATION ---
   }
 }
 
@@ -29,14 +34,14 @@ Customer.init({
       notEmpty: { msg: "Customer name cannot be empty" },
     }
   },
-  companyName: { // Optional
+  companyName: {
     type: DataTypes.STRING,
     allowNull: true,
-    field: 'company_name' // Explicit snake_case mapping
+    field: 'company_name'
   },
   email: {
     type: DataTypes.STRING,
-    allowNull: true, // Or false if required
+    allowNull: true,
     unique: true,
     validate: {
       isEmail: { msg: "Must be a valid email address" },
@@ -50,7 +55,7 @@ Customer.init({
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  vatId: { // Tax ID, e.g., DIČ in CZ
+  vatId: {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'vat_id'
@@ -59,13 +64,13 @@ Customer.init({
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  // createdAt and updatedAt automatically added by timestamps: true
+  // createdAt and updatedAt automatically added
 }, {
   sequelize,
   modelName: 'Customer',
   tableName: 'customers',
   timestamps: true,
-  underscored: true, // Use snake_case for columns
+  underscored: true,
 });
 
 module.exports = Customer;
