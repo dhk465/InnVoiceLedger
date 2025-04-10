@@ -16,6 +16,7 @@ const customerRoutes = require('./routes/customerRoutes');
 const ledgerEntryRoutes = require('./routes/ledgerEntryRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const businessSettingRoutes = require('./routes/businessSettingRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // --- Connect to Database (Test Connection) ---
 connectDB();
@@ -35,6 +36,11 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
   res.send('InnVoice Ledger Backend API is running!');
 });
+
+// Mount Auth routes FIRST (or where appropriate)
+app.use('/api/auth', authRoutes);
+
+// Mount other resource routes (These will be protected later)
 app.use('/api/items', itemRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/ledger', ledgerEntryRoutes);

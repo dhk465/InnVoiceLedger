@@ -10,18 +10,17 @@ const {
   // deleteItem  // Add later
 } = require('../controllers/itemController'); // Adjust path if needed
 
-// Define routes mapping to controller functions
+// Import protect
+const { protect } = require('../middleware/authMiddleware');
 
-// Route for GET /api/items and POST /api/items
+// Apply protect middleware to all routes in this file
+router.use(protect);
+
+// Define routes (protected)
 router.route('/')
-  .get(getAllItems)
-  .post(createItem);
+  .post(createItem)
+  .get(getAllItems);
 
-// Routes for specific items by ID (will add later)
-// Example:
-// router.route('/:id')
-//   .get(getItemById)
-//   .put(updateItem)
-//   .delete(deleteItem);
+// Add protected routes for /:id later
 
 module.exports = router; // Export the router
