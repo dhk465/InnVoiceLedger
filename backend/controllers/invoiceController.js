@@ -111,7 +111,7 @@ const generateInvoice = async (req, res) => {
     }
 };
 
-// --- ADDED: Function to get list of invoices ---
+// Function to get list of invoices
 // @desc    Get all Invoices (basic list)
 // @route   GET /api/invoices
 // @access  Private (needs auth later)
@@ -134,11 +134,52 @@ const getInvoices = async (req, res) => {
         res.status(500).json({ message: 'Server error fetching invoices.' });
     }
 };
-// --- END ADD ---
 
-// TODO: Add getInvoiceById later
+// Function to get a single invoice by ID
+// @desc    Get single Invoice by ID
+// @route   GET /api/invoices/:id
+// @access  Private (needs auth later)
+const getInvoiceById = async (req, res) => {
+    try {
+        const { id } = req.params; // Get ID from route parameter
+
+        // Find the invoice by primary key
+        const invoice = await Invoice.findByPk(id, {
+            // Include associated data needed for display
+            include: [
+                {
+                    model: Customer,
+                    as: 'customer', // Include customer details
+                    attributes: ['id', 'name', 'companyName', 'email', 'phone', 'address', 'vatId'] // Specify needed fields
+                },
+                {
+                    model: InvoiceItem,
+                    as: 'invoiceItems', // Include all line items associated with the invoice
+                    // No need to include Item again here unless originalItemId is stored and needed
+                }
+                // Optionally include associated Ledger Entries if needed:
+                // { model: LedgerEntry, as: 'billedEntries', attributes: ['id', 'entryDate'] }
+            ]
+        });
+
+        // Check if invoice exists
+        if (!invoice) {
+            return res.status(404).json({ message: 'Invoice not found.' });
+        }
+
+        // TODO: Potentially fetch Business Settings snapshot here if not stored on invoice
+        // Or just rely on the snapshot stored on the invoice record itself later
+
+        res.status(200).json(invoice); // Return the detailed invoice object
+
+    } catch (error) {
+        console.error(`Error fetching invoice by ID (${req.params.id}):`, error);
+        res.status(500).json({ message: 'Server error fetching invoice details.' });
+    }
+};
 
 module.exports = {
-  generateInvoice,
-  getInvoices, // <-- Export new function
-};
+    generateInvoice,
+    getInvoices,
+    getInvoiceById,
+  };

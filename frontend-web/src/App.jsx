@@ -10,6 +10,8 @@ import ItemsPage from './pages/ItemsPage';
 import CustomersPage from './pages/CustomersPage';
 import LedgerPage from './pages/LedgerPage';
 import InvoicesPage from './pages/InvoicesPage';
+import InvoiceDetailPage from './pages/InvoiceDetailPage';
+
 // Import other pages as you create them
 
 function App() {
@@ -23,6 +25,7 @@ function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/ledger" element={<LedgerPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
+          <Route path="/invoices/:id" element={<InvoiceDetailPage />} />
           {/* Define a catch-all route for 404 Not Found (optional) */}
           <Route path="*" element={<h2>404 - Page Not Found</h2>} />
         </Routes>

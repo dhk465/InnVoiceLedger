@@ -40,7 +40,7 @@ export const createLedgerEntry = async (entryData) => {
   catch (error) { console.error('Error creating ledger entry:', error); throw error; }
 };
 
-// --- Invoice Functions (NEW) ---
+// --- Invoice Functions ---
 /**
  * Fetches a list of all invoices.
  * @returns {Promise<Array>} - Promise resolving to an array of invoices.
@@ -69,4 +69,20 @@ export const generateInvoice = async (generationData) => {
     throw error; // Let the calling component handle UI feedback
   }
 };
-// --- End Invoice Functions ---
+
+// --- Get single invoice by ID ---
+/**
+ * Fetches a single invoice by its ID, including details.
+ * @param {string} invoiceId - The UUID of the invoice.
+ * @returns {Promise<object>} - Promise resolving to the detailed invoice object.
+ */
+export const getInvoiceById = async (invoiceId) => {
+  if (!invoiceId) throw new Error("Invoice ID is required."); // Basic validation
+  try {
+      const response = await apiClient.get(`/invoices/${invoiceId}`);
+      return response.data;
+  } catch (error) {
+      console.error(`Error fetching invoice by ID ${invoiceId}:`, error);
+      throw error; // Re-throw for component handling
+  }
+};

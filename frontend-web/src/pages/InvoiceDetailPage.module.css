@@ -1,0 +1,125 @@
+/* frontend-web/src/pages/InvoiceDetailPage.module.css */
+
+.pageContainer {
+    padding: 1.5rem;
+    max-width: 900px; /* Limit width for better readability */
+    margin: 1rem auto;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.backLink {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    color: #007bff;
+    text-decoration: none;
+}
+.backLink:hover {
+    text-decoration: underline;
+}
+
+.invoiceHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #dee2e6;
+}
+.invoiceHeader h1 {
+    margin: 0;
+    color: #343a40;
+}
+.status {
+    font-weight: bold;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    background-color: #e9ecef; /* Default/issued status color */
+    color: #495057;
+    /* Add specific styles for different statuses later */
+    /* e.g., .statusPaid { background-color: #d1e7dd; color: #0f5132; } */
+}
+
+.detailsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive columns */
+    gap: 2rem;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+.customerDetails h2, .metaDetails h2 { /* Add h2 for meta if needed */
+    margin-top: 0;
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+    color: #495057;
+}
+.customerDetails p, .metaDetails p {
+    margin: 0.3rem 0;
+}
+
+/* Table for line items */
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem; /* Slightly smaller */
+}
+.itemsTable th,
+.itemsTable td {
+  border: 1px solid #dee2e6;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: top; /* Align top for multi-line descriptions */
+  color: #212529;
+}
+.itemsTable th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+/* Alignment helpers */
+.rightAlign { text-align: right; }
+.centerAlign { text-align: center; }
+
+
+/* Totals Section */
+.totalsSection {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 2px solid #dee2e6;
+    text-align: right; /* Align totals to the right */
+    font-size: 1rem;
+}
+.totalsSection p {
+    margin: 0.5rem 0;
+    color: #495057;
+}
+.totalsSection h3 {
+    margin: 0.8rem 0 0 0;
+    color: #212529;
+}
+
+/* Notes Section */
+.notesSection {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #dee2e6;
+}
+.notesSection h2 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    color: #495057;
+}
+.notesSection p {
+    font-size: 0.9rem;
+    color: #343a40;
+}
+
+
+/* Shared loading/error styles (copied for completeness) */
+.loadingMessage { font-style: italic; color: #6c757d; padding: 1rem; }
+.errorMesssage { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }

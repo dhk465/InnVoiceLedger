@@ -1,10 +1,13 @@
 // src/pages/InvoicesPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { getInvoices } from '../services/apiService'; // Import API function
-// Import shared currency formatting function if needed or define locally
-import { formatCurrency } from '../utils/formatting'; // Assuming you create this util file
-// --- Optional: Create and import CSS Module ---
-import styles from './InvoicesPage.module.css'; // Example path
+// Import Link for navigation
+import { Link } from 'react-router-dom';
+// Import API service function
+import { getInvoices } from '../services/apiService';
+// Import formatting utilities (assuming you created src/utils/formatting.js)
+import { formatCurrency, formatDate } from '../utils/formatting';
+// Import CSS module for styling
+import styles from './InvoicesPage.module.css';
 
 // Simple fallback currency formatter if not importing from utils
 const formatCurrencyLocal = (amount, currencyCode) => {
@@ -19,63 +22,68 @@ const formatCurrencyLocal = (amount, currencyCode) => {
       } catch (e) { return `${numAmount.toFixed(2)} ${currencyCode}`; }
 };
 
+// Simple fallback date formatter if not importing from utils
+const formatDateLocal = (dateString) => {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00Z');
+        return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+    } catch(e) { return dateString; }
+};
+
 
 function InvoicesPage() {
+  // State for invoices list, loading, and errors
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Function to fetch invoices, memoized with useCallback
   const fetchInvoices = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getInvoices();
-      setInvoices(data);
+      const data = await getInvoices(); // Call the API
+      setInvoices(data); // Update state
     } catch (err) {
       console.error("Failed to fetch invoices:", err);
       setError('Failed to load invoices. Please try again later.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array - fetch function doesn't change
 
+  // useEffect to call fetchInvoices on component mount
   useEffect(() => {
     fetchInvoices();
-  }, [fetchInvoices]);
-
-   // Helper for formatting date
-   const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-        // DateOnly fields from Sequelize might not need time part
-        return new Date(dateString + 'T00:00:00Z').toLocaleDateString(undefined, { // Add time part for correct local date
-            year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' // Specify UTC if needed
-        });
-    } catch(e) { return dateString; }
-  }
+  }, [fetchInvoices]); // Depends on the fetchInvoices function reference
 
 
+  // Use imported formatters or local fallbacks
+  const displayFormatCurrency = typeof formatCurrency === 'function' ? formatCurrency : formatCurrencyLocal;
+  const displayFormatDate = typeof formatDate === 'function' ? formatDate : formatDateLocal;
+
+
+  // --- Render Logic ---
   if (isLoading) {
-    // Apply styles if module exists
-    return <div className={styles?.loadingMessage || ''} style={!styles?.loadingMessage ? { fontStyle: 'italic', color: '#6c757d', padding: '1rem' } : {}}>Loading invoices...</div>;
+    return <div className={styles.loadingMessage}>Loading invoices...</div>;
   }
 
   if (error) {
-    // Apply styles if module exists
-    return <div className={styles?.errorMesssage || ''} style={!styles?.errorMesssage ? { color: '#dc3545', backgroundColor: '#f8d7da', border: '1px solid #f5c6cb', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' } : {}}>Error: {error}</div>;
+    return <div className={styles.errorMesssage}>Error: {error}</div>;
   }
 
   return (
-    // Apply styles if module exists
-    <div className={styles?.pageContainer || ''} style={!styles?.pageContainer ? { padding: '1rem'} : {}}>
-      <div className={styles?.header || ''} style={!styles?.header ? { marginBottom: '1.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid #dee2e6'} : {}}>
+    <div className={styles.pageContainer}>
+      {/* Page Header */}
+      <div className={styles.header}>
         <h2>Manage Invoices</h2>
         <p>List of generated invoices.</p>
-        {/* Add "Generate Invoice" button/section here later */}
+        {/* Placeholder for future actions like bulk export or generate button */}
       </div>
 
-      {/* Apply styles if module exists */}
-      <table className={styles?.invoicesTable || ''} style={!styles?.invoicesTable ? { width: '100%', borderCollapse: 'collapse', marginTop: '1rem' } : {}}>
+      {/* Invoices Table */}
+      <table className={styles.invoicesTable}>
         <thead>
           <tr>
             <th>Inv. Number</th>
@@ -90,26 +98,39 @@ function InvoicesPage() {
         </thead>
         <tbody>
           {invoices.length > 0 ? (
+            // Map through the fetched invoices
             invoices.map(invoice => (
               <tr key={invoice.id}>
-                <td>{invoice.invoiceNumber}</td>
-                {/* Use optional chaining for safety */}
-                <td>{invoice.customer?.name || 'N/A'} {invoice.customer?.companyName ? `(${invoice.customer.companyName})` : ''}</td>
-                <td>{formatDate(invoice.issueDate)}</td>
-                <td>{formatDate(invoice.dueDate)}</td>
-                <td style={{ textAlign: 'right' }}>
-                  {formatCurrencyLocal(invoice.grandTotal, invoice.currency)}
+                {/* Invoice Number as a Link to the detail page */}
+                <td>
+                  <Link to={`/invoices/${invoice.id}`} title="View Details" className={styles.invoiceLink}>
+                    {invoice.invoiceNumber}
+                  </Link>
                 </td>
+                {/* Customer Name (with company name if available) */}
+                <td>
+                  {invoice.customer?.name || 'N/A'}
+                  {invoice.customer?.companyName ? ` (${invoice.customer.companyName})` : ''}
+                </td>
+                {/* Formatted Dates */}
+                <td>{displayFormatDate(invoice.issueDate)}</td>
+                <td>{displayFormatDate(invoice.dueDate)}</td>
+                {/* Formatted Total Amount */}
+                <td style={{ textAlign: 'right' }}>
+                  {displayFormatCurrency(invoice.grandTotal, invoice.currency)}
+                </td>
+                {/* Currency Code */}
                 <td>{invoice.currency}</td>
+                {/* Status */}
                 <td>{invoice.status}</td>
-                {/* Add View/Download buttons later */}
-                {/* <td><button>View</button> <button>Download</button></td> */}
+                {/* Placeholder for action buttons (e.g., Download PDF) */}
+                {/* <td><button>Download</button></td> */}
               </tr>
             ))
           ) : (
-             // Apply styles if module exists
-            <tr className={styles?.noInvoicesRow || ''} style={!styles?.noInvoicesRow ? { fontStyle: 'italic' } : {}}>
-              {/* Adjust colSpan */}
+            // Row displayed when no invoices are found
+            <tr className={styles.noInvoicesRow}>
+              {/* Adjust colSpan according to the number of columns */}
               <td colSpan="7">No invoices found.</td>
             </tr>
           )}

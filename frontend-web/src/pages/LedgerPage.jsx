@@ -22,7 +22,7 @@ function LedgerPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [targetCurrency, setTargetCurrency] = useState('EUR'); // Default or fetch from settings
+  const [targetCurrency, setTargetCurrency] = useState('CZK'); // Default or fetch from settings
   const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [isGenerating, setIsGenerating] = useState(false); // Loading state for generation button
   const [generationError, setGenerationError] = useState(null); // Error during generation
