@@ -1,98 +1,72 @@
+// src/services/apiService.js
 import axios from 'axios';
 
-// Define the base URL of your backend API
-// Make sure this matches the port your backend is running on (from backend/.env)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-
-// Create an axios instance with default settings
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    // Add any other default headers here if needed (e.g., Authorization later)
   }
 });
 
-// Function to fetch all items
+// --- Item Functions ---
 export const getItems = async () => {
-  try {
-    const response = await apiClient.get('/items'); // Makes GET request to baseURL + /items
-    return response.data; // Return the data part of the response (the array of items)
-  } catch (error) {
-    console.error('Error fetching items:', error);
-    // Handle error appropriately - maybe re-throw, return null, or return an error object
-    // For now, re-throwing allows the component to catch it
-    throw error;
-  }
+  try { const response = await apiClient.get('/items'); return response.data; }
+  catch (error) { console.error('Error fetching items:', error); throw error; }
 };
-
-// Function to create a new item
 export const createItem = async (itemData) => {
-  try {
-    const response = await apiClient.post('/items', itemData); // Makes POST request
-    return response.data; // Return the newly created item data
-  } catch (error) {
-    console.error('Error creating item:', error);
-    // Re-throw the error so the form can catch it and display messages
-    throw error;
-  }
+  try { const response = await apiClient.post('/items', itemData); return response.data; }
+  catch (error) { console.error('Error creating item:', error); throw error; }
 };
 
 // --- Customer Functions ---
 export const getCustomers = async () => {
-  try {
-    const response = await apiClient.get('/customers');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching customers:', error);
-    throw error; // Re-throw for component handling
-  }
+  try { const response = await apiClient.get('/customers'); return response.data; }
+  catch (error) { console.error('Error fetching customers:', error); throw error; }
 };
-
 export const createCustomer = async (customerData) => {
-  try {
-    const response = await apiClient.post('/customers', customerData);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating customer:', error);
-    throw error; // Re-throw for form handling
-  }
+  try { const response = await apiClient.post('/customers', customerData); return response.data; }
+  catch (error) { console.error('Error creating customer:', error); throw error; }
 };
-// --- End Customer Functions ---
 
-// --- Ledger Functions (NEW/UPDATED) ---
-/**
- * Fetches ledger entries based on provided filters.
- * @param {object} params - Optional query parameters for filtering (e.g., { customerId, itemId, startDate, endDate, billingStatus })
- * @returns {Promise<Array>} - Promise resolving to an array of ledger entries
- */
+// --- Ledger Functions ---
 export const getLedgerEntries = async (params = {}) => {
+  try { const response = await apiClient.get('/ledger', { params }); return response.data; }
+  catch (error) { console.error('Error fetching ledger entries:', error); throw error; }
+};
+export const createLedgerEntry = async (entryData) => {
+  try { const response = await apiClient.post('/ledger', entryData); return response.data; }
+  catch (error) { console.error('Error creating ledger entry:', error); throw error; }
+};
+
+// --- Invoice Functions (NEW) ---
+/**
+ * Fetches a list of all invoices.
+ * @returns {Promise<Array>} - Promise resolving to an array of invoices.
+ */
+export const getInvoices = async () => {
   try {
-    // Pass the params object to axios, it will handle query string generation
-    const response = await apiClient.get('/ledger', { params });
+    const response = await apiClient.get('/invoices');
     return response.data;
   } catch (error) {
-    console.error('Error fetching ledger entries:', error);
+    console.error('Error fetching invoices:', error);
     throw error;
   }
 };
 
 /**
- * Creates a new ledger entry.
- * @param {object} entryData - Data for the new entry (customerId, itemId, quantity, entryDate?, notes?)
- * @returns {Promise<object>} - Promise resolving to the newly created ledger entry
+ * Sends a request to generate a new invoice.
+ * @param {object} generationData - Data needed for generation { customerId, startDate, endDate, issueDate, targetCurrency, dueDate?, notes? }
+ * @returns {Promise<object>} - Promise resolving to the newly generated invoice object.
  */
-export const createLedgerEntry = async (entryData) => {
+export const generateInvoice = async (generationData) => {
   try {
-    const response = await apiClient.post('/ledger', entryData);
+    const response = await apiClient.post('/invoices/generate', generationData);
     return response.data;
   } catch (error) {
-    console.error('Error creating ledger entry:', error);
-    throw error;
+    console.error('Error generating invoice:', error);
+    throw error; // Let the calling component handle UI feedback
   }
 };
-// --- End Ledger Functions ---
-
-// Export the configured apiClient if needed elsewhere, otherwise just export functions
-// export default apiClient;
+// --- End Invoice Functions ---

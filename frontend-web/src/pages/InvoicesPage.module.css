@@ -1,0 +1,91 @@
+/* frontend-web/src/pages/InvoicesPage.module.css */
+
+/* Reusing styles similar to other pages */
+
+.pageContainer {
+    padding: 1rem;
+  }
+  
+  .header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .header h2 {
+      margin-bottom: 0.5rem;
+      color: #212529;
+  }
+  
+  .header p {
+      color: #495057;
+  }
+  
+  /* Specific table class */
+  .invoicesTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    background-color: #ffffff;
+  }
+  
+  .invoicesTable th,
+  .invoicesTable td {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+    color: #212529;
+  }
+  
+  .invoicesTable th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #212529;
+  }
+  
+  .invoicesTable tbody tr {
+      background-color: #ffffff;
+  }
+  
+  .invoicesTable tbody tr:hover {
+    background-color: #f1f3f5;
+  }
+  
+  /* --- Alignment rules for Invoice Table --- */
+  /* Right-align Total Amount */
+  .invoicesTable td:nth-child(5) {
+    text-align: right;
+  }
+  /* Center-align Status and Currency (optional) */
+  .invoicesTable td:nth-child(6),
+  .invoicesTable td:nth-child(7) {
+    text-align: center;
+  }
+  /* --- End alignment rules --- */
+  
+  .noInvoicesRow td { /* Specific class */
+      text-align: center;
+      font-style: italic;
+      color: #6c757d;
+      padding: 1.5rem;
+      background-color: #ffffff;
+  }
+  
+  /* Reusing shared error/loading styles */
+  .errorMesssage {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+  }
+  
+  .loadingMessage {
+      font-style: italic;
+      color: #6c757d;
+      padding: 1rem;
+  }

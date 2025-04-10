@@ -1,7 +1,6 @@
 /* frontend-web/src/pages/LedgerPage.module.css */
 
-/* Reusing styles similar to ItemsPage/CustomersPage */
-
+/* Basic page layout */
 .pageContainer {
   padding: 1rem;
 }
@@ -11,19 +10,97 @@
   padding-bottom: 0.5rem;
   border-bottom: 1px solid #dee2e6;
 }
+.header h2 { margin-bottom: 0.5rem; color: #212529; }
+.header p { color: #495057; }
 
-.header h2 {
-    margin-bottom: 0.5rem;
-    color: #212529;
+/* Invoice Generation Section */
+.invoiceGenSection {
+  border: 1px solid #e0e0e0;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: #fdfdfd;
+  border-radius: 4px;
+}
+.invoiceGenSection h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #343a40;
 }
 
-.header p {
+.genFormGrid {
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    gap: 1rem; /* Spacing between form groups */
+    align-items: flex-end; /* Align items to the bottom (useful for button) */
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; /* Space between label and input */
+    flex-grow: 1; /* Allow groups to grow */
+    min-width: 150px; /* Minimum width for inputs */
+}
+
+.formLabel {
+    font-weight: 500;
+    font-size: 0.9em;
     color: #495057;
 }
 
-/* Specific button class */
+.formInput, .formSelect {
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    width: 100%; /* Make inputs fill their group */
+    box-sizing: border-box;
+}
+.formInputShort { /* For currency input */
+     composes: formInput; /* Inherit base styles */
+     max-width: 100px;
+     text-transform: uppercase;
+}
+
+.generateButton {
+    background-color: #198754; /* Bootstrap success green */
+    color: white;
+    padding: 0.55rem 1rem; /* Slightly adjust padding to align better */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background-color 0.2s ease-in-out;
+    height: calc(1.5em + 1rem + 2px); /* Match input height roughly */
+    line-height: 1.5;
+}
+.generateButton:hover:not(:disabled) {
+    background-color: #157347;
+}
+.generateButton:disabled {
+    background-color: #a0a0a0;
+    cursor: not-allowed;
+}
+
+.genErrorMessage {
+    color: #dc3545;
+    margin-top: 0.75rem;
+    font-size: 0.9em;
+    font-weight: 500;
+    width: 100%; /* Span full width below grid */
+}
+.genSuccessMessage {
+    color: #198754;
+    margin-top: 0.75rem;
+    font-size: 0.9em;
+    font-weight: 500;
+    width: 100%;
+}
+
+
+/* Add Entry Button */
 .addEntryButton {
-  background-color: #007bff;
+  background-color: #0d6efd; /* Slightly different blue? */
   color: #ffffff;
   padding: 0.6rem 1.2rem;
   border: none;
@@ -35,16 +112,16 @@
 }
 .addEntryButton:hover,
 .addEntryButton:focus {
-  background-color: #0056b3;
+  background-color: #0b5ed7;
   outline: none;
 }
 
-/* Specific table class */
+/* Ledger Table Styles */
 .ledgerTable {
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
-  font-size: 0.95rem;
+  font-size: 0.9rem; /* Slightly smaller font */
   box-shadow: 0 1px 3px rgba(0,0,0,0.07);
   background-color: #ffffff;
 }
@@ -52,7 +129,7 @@
 .ledgerTable th,
 .ledgerTable td {
   border: 1px solid #dee2e6;
-  padding: 0.75rem;
+  padding: 0.6rem 0.75rem; /* Adjust padding */
   text-align: left;
   vertical-align: middle;
   color: #212529;
@@ -61,49 +138,23 @@
 .ledgerTable th {
   background-color: #f8f9fa;
   font-weight: 600;
-  color: #212529;
-}
-
-.ledgerTable tbody tr {
-    background-color: #ffffff;
 }
 
 .ledgerTable tbody tr:hover {
   background-color: #f1f3f5;
 }
 
-/* --- Alignment rules for Ledger Table --- */
-/* Right-align Quantity */
-.ledgerTable td:nth-child(4) {
-  text-align: right;
-}
-/* Center-align Status (optional) */
-.ledgerTable td:nth-child(7) {
-  text-align: center;
-}
-/* --- End alignment rules --- */
+/* Alignment rules */
+.ledgerTable td:nth-child(4) { text-align: right; } /* Quantity */
+.ledgerTable td:nth-child(7) { text-align: center; } /* Status */
 
-
-.noEntriesRow td { /* Specific class */
+.noEntriesRow td {
     text-align: center;
     font-style: italic;
     color: #6c757d;
     padding: 1.5rem;
-    background-color: #ffffff;
 }
 
-/* Reusing shared error/loading styles */
-.errorMesssage {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-}
-
-.loadingMessage {
-    font-style: italic;
-    color: #6c757d;
-    padding: 1rem;
-}
+/* Shared loading/error styles */
+.loadingMessage { font-style: italic; color: #6c757d; padding: 1rem; }
+.errorMesssage { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
