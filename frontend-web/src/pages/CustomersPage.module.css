@@ -1,0 +1,106 @@
+/* frontend-web/src/pages/CustomersPage.module.css */
+
+/* Reusing styles similar to ItemsPage */
+
+.pageContainer {
+    padding: 1rem;
+  }
+  
+  .header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .header h2 {
+      margin-bottom: 0.5rem;
+      color: #212529;
+  }
+  
+  .header p {
+      color: #495057;
+  }
+  
+  /* Can reuse addItemButton style name if desired, or rename */
+  .addCustomerButton {
+    background-color: #007bff;
+    color: #ffffff;
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.2s ease-in-out;
+  }
+  .addCustomerButton:hover,
+  .addCustomerButton:focus {
+    background-color: #0056b3;
+    outline: none;
+  }
+  
+  /* Reusing table styles - could be extracted to a shared module */
+  .customersTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    background-color: #ffffff;
+  }
+  
+  .customersTable th,
+  .customersTable td {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+    color: #212529;
+    /* Add max-width and overflow for potentially long fields like address if needed */
+    /* max-width: 200px; */
+    /* overflow: hidden; */
+    /* text-overflow: ellipsis; */
+    /* white-space: nowrap; */
+  }
+  
+  .customersTable th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #212529;
+  }
+  
+  .customersTable tbody tr {
+      background-color: #ffffff;
+  }
+  
+  .customersTable tbody tr:hover {
+    background-color: #f1f3f5;
+  }
+  
+  /* No specific column alignment needed by default for customer data */
+  /* Add alignment rules here if desired for specific columns */
+  
+  
+  .noCustomersRow td { /* Renamed for clarity */
+      text-align: center;
+      font-style: italic;
+      color: #6c757d;
+      padding: 1.5rem;
+      background-color: #ffffff;
+  }
+  
+  /* Reusing shared error/loading styles */
+  .errorMesssage {
+      color: #721c24;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+  }
+  
+  .loadingMessage {
+      font-style: italic;
+      color: #6c757d;
+      padding: 1rem;
+  }

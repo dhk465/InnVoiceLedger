@@ -3,9 +3,6 @@ import axios from 'axios';
 // Define the base URL of your backend API
 // Make sure this matches the port your backend is running on (from backend/.env)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-// Note: Vite uses 'import.meta.env.VITE_API_URL' instead of REACT_APP_*.
-// Let's adjust for Vite:
-// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 
 // Create an axios instance with default settings
@@ -42,9 +39,29 @@ export const createItem = async (itemData) => {
   }
 };
 
+// --- Customer Functions (NEW) ---
+export const getCustomers = async () => {
+  try {
+    const response = await apiClient.get('/customers');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    throw error; // Re-throw for component handling
+  }
+};
+
+export const createCustomer = async (customerData) => {
+  try {
+    const response = await apiClient.post('/customers', customerData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating customer:', error);
+    throw error; // Re-throw for form handling
+  }
+};
+// --- End Customer Functions ---
+
 // --- Add functions for other endpoints later ---
-// export const getCustomers = async () => { ... apiClient.get('/customers') ... };
-// export const createCustomer = async (customerData) => { ... apiClient.post('/customers', customerData) ... };
 // export const getLedgerEntries = async (params) => { ... apiClient.get('/ledger', { params }) ... };
 // export const createLedgerEntry = async (entryData) => { ... apiClient.post('/ledger', entryData) ... };
 
