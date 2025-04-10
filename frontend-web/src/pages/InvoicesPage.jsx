@@ -3,8 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 // Import Link for navigation
 import { Link } from 'react-router-dom';
 // Import API service function
-import { getInvoices } from '../services/apiService';
-// Import formatting utilities (assuming you created src/utils/formatting.js)
+import { getInvoices, getInvoicePdfUrl } from '../services/apiService';
+// Import formatting utilities
 import { formatCurrency, formatDate } from '../utils/formatting';
 // Import CSS module for styling
 import styles from './InvoicesPage.module.css';
@@ -64,6 +64,44 @@ function InvoicesPage() {
   const displayFormatDate = typeof formatDate === 'function' ? formatDate : formatDateLocal;
 
 
+  // --- Handler for download button click ---
+  const handleDownloadClick = (invoiceId) => {
+    if (!invoiceId) return;
+    try {
+        const pdfUrl = getInvoicePdfUrl(invoiceId);
+        // Open the URL in a new tab - browser handles download/display
+        window.open(pdfUrl, '_blank');
+    } catch (err) {
+        console.error("Error getting PDF URL:", err);
+        // Optionally show an error to the user
+        alert("Could not generate download link.");
+    }
+
+    // --- Alternative using Axios blob download (more complex) ---
+    /*
+    const downloadBlob = async (invoiceId) => {
+        try {
+            const blob = await downloadInvoicePdfBlob(invoiceId);
+            // Create a link element to trigger download
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            // Extract filename suggestion from backend header (if possible) or create one
+            const filename = `Invoice-${invoiceId}.pdf`; // Basic filename
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(link.href); // Clean up blob URL
+        } catch (err) {
+            console.error("Error downloading PDF blob:", err);
+            alert("Failed to download PDF.");
+        }
+    }
+    // downloadBlob(invoiceId); // Call this instead of window.open
+    */
+    // --- End Alternative ---
+  };
+
   // --- Render Logic ---
   if (isLoading) {
     return <div className={styles.loadingMessage}>Loading invoices...</div>;
@@ -93,7 +131,7 @@ function InvoicesPage() {
             <th>Total Amount</th>
             <th>Currency</th>
             <th>Status</th>
-            {/* <th>Actions</th> */}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -123,7 +161,17 @@ function InvoicesPage() {
                 <td>{invoice.currency}</td>
                 {/* Status */}
                 <td>{invoice.status}</td>
-                {/* Placeholder for action buttons (e.g., Download PDF) */}
+                {/* Actions Cell */}
+                <td>
+                  <button
+                    onClick={() => handleDownloadClick(invoice.id)}
+                    className={styles.actionButton}
+                    title="Download PDF"
+                  >
+                    Download
+                  </button>
+                  {/* Add Edit button later if needed */}
+                </td>
                 {/* <td><button>Download</button></td> */}
               </tr>
             ))
@@ -131,7 +179,7 @@ function InvoicesPage() {
             // Row displayed when no invoices are found
             <tr className={styles.noInvoicesRow}>
               {/* Adjust colSpan according to the number of columns */}
-              <td colSpan="7">No invoices found.</td>
+              <td colSpan="8">No invoices found.</td>
             </tr>
           )}
         </tbody>

@@ -86,3 +86,34 @@ export const getInvoiceById = async (invoiceId) => {
       throw error; // Re-throw for component handling
   }
 };
+
+// --- Helper to get PDF download URL ---
+/**
+ * Returns the absolute URL to download the PDF for a given invoice ID.
+ * @param {string} invoiceId - The UUID of the invoice.
+ * @returns {string} - The full URL for the PDF download endpoint.
+ */
+export const getInvoicePdfUrl = (invoiceId) => {
+  if (!invoiceId) throw new Error("Invoice ID is required.");
+  // Construct the full URL based on the API base
+  return `${API_BASE_URL}/invoices/${invoiceId}/pdf`;
+};
+
+// --- Alternative: Function to fetch PDF blob using Axios (if auth needed) ---
+/*
+export const downloadInvoicePdfBlob = async (invoiceId) => {
+  if (!invoiceId) throw new Error("Invoice ID is required.");
+  try {
+      const url = `/invoices/${invoiceId}/pdf`; // Relative path for apiClient
+      const response = await apiClient.get(url, {
+          responseType: 'blob', // Important: Ask axios to handle response as a binary blob
+          // Add Authorization header here if needed later
+          // headers: { 'Authorization': `Bearer ${your_token}` }
+      });
+      return response.data; // Returns the Blob object
+  } catch (error) {
+      console.error(`Error downloading PDF blob for invoice ${invoiceId}:`, error);
+      throw error;
+  }
+};
+*/

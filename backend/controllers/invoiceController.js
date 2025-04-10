@@ -3,6 +3,9 @@ const { Op, Transaction } = require('sequelize');
 const axios = require('axios');
 const { Invoice, InvoiceItem, LedgerEntry, Customer, Item, BusinessSetting, sequelize } = require('../models');
 
+const { buildInvoicePDF } = require('../services/pdfService'); // Import PDF builder
+const { formatCurrency, formatDate } = require('../utils/formatting'); // Use backend formatting
+
 const FRANKFURTER_API_URL = 'https://api.frankfurter.app';
 const SETTINGS_ID = 1;
 
@@ -178,8 +181,53 @@ const getInvoiceById = async (req, res) => {
     }
 };
 
+// --- Function to download Invoice PDF ---
+// @desc    Download Invoice as PDF
+// @route   GET /api/invoices/:id/pdf
+// @access  Private
+const downloadInvoicePDF = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Fetch the invoice with all necessary details for the PDF
+        const invoice = await Invoice.findByPk(id, {
+            include: [
+                { model: Customer, as: 'customer' }, // Include full customer needed for PDF
+                { model: InvoiceItem, as: 'invoiceItems' } // Include line items
+            ]
+        });
+
+        if (!invoice) {
+            return res.status(404).json({ message: 'Invoice not found.' });
+        }
+
+        // --- Prepare for PDF Generation ---
+        // Set headers for PDF download
+        const filename = `Invoice-${invoice.invoiceNumber || invoice.id}.pdf`;
+        res.setHeader('Content-disposition', `attachment; filename="${filename}"`); // Suggest download
+        res.setHeader('Content-type', 'application/pdf'); // Set MIME type
+
+        // --- Call PDF Builder ---
+        // buildInvoicePDF function takes the data and the response stream
+        buildInvoicePDF(invoice.toJSON(), res); // Pass plain JSON object and the response stream
+
+        // The 'doc.end()' call inside buildInvoicePDF will end the response stream
+
+    } catch (error) {
+        console.error(`Error generating PDF for invoice ID (${req.params.id}):`, error);
+        // If headers were already sent, we might not be able to send JSON error
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Server error generating invoice PDF.' });
+        } else {
+            // If stream started, try to end it abruptly? Difficult to handle cleanly.
+            console.error("Headers already sent, cannot send JSON error response for PDF generation failure.");
+            res.end(); // End the stream if possible
+        }
+    }
+};
+
 module.exports = {
     generateInvoice,
     getInvoices,
     getInvoiceById,
+    downloadInvoicePDF,
   };
