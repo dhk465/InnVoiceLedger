@@ -39,7 +39,7 @@ export const createItem = async (itemData) => {
   }
 };
 
-// --- Customer Functions (NEW) ---
+// --- Customer Functions ---
 export const getCustomers = async () => {
   try {
     const response = await apiClient.get('/customers');
@@ -61,9 +61,38 @@ export const createCustomer = async (customerData) => {
 };
 // --- End Customer Functions ---
 
-// --- Add functions for other endpoints later ---
-// export const getLedgerEntries = async (params) => { ... apiClient.get('/ledger', { params }) ... };
-// export const createLedgerEntry = async (entryData) => { ... apiClient.post('/ledger', entryData) ... };
+// --- Ledger Functions (NEW/UPDATED) ---
+/**
+ * Fetches ledger entries based on provided filters.
+ * @param {object} params - Optional query parameters for filtering (e.g., { customerId, itemId, startDate, endDate, billingStatus })
+ * @returns {Promise<Array>} - Promise resolving to an array of ledger entries
+ */
+export const getLedgerEntries = async (params = {}) => {
+  try {
+    // Pass the params object to axios, it will handle query string generation
+    const response = await apiClient.get('/ledger', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching ledger entries:', error);
+    throw error;
+  }
+};
+
+/**
+ * Creates a new ledger entry.
+ * @param {object} entryData - Data for the new entry (customerId, itemId, quantity, entryDate?, notes?)
+ * @returns {Promise<object>} - Promise resolving to the newly created ledger entry
+ */
+export const createLedgerEntry = async (entryData) => {
+  try {
+    const response = await apiClient.post('/ledger', entryData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating ledger entry:', error);
+    throw error;
+  }
+};
+// --- End Ledger Functions ---
 
 // Export the configured apiClient if needed elsewhere, otherwise just export functions
 // export default apiClient;
