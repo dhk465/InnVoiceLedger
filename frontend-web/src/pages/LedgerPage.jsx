@@ -36,13 +36,13 @@ function LedgerPage() {
 
   // --- Memoized Calendar Messages ---
   const messages = useMemo(() => {
-      // Provides translated text for buttons like "Month", "Week", "Today", etc.
+      // Provides translated text for calendar UI elements
       switch (currentLocaleCode) {
           case 'cs-CZ':
               return {
                   allDay: 'Celý den', today: 'Dnes', previous: 'Předchozí', next: 'Další',
                   month: 'Měsíc', week: 'Týden', day: 'Den', agenda: 'Agenda',
-                  date: 'Datum', time: 'Čas', event: 'Událost', // etc.
+                  date: 'Datum', time: 'Čas', event: 'Událost',
                   noEventsInRange: 'V tomto rozsahu nejsou žádné události.',
               };
           case 'ko-KR':
@@ -54,7 +54,6 @@ function LedgerPage() {
               };
           case 'en-US':
           default:
-              // Default English messages are built-in, but providing explicitly is fine
                return {
                   allDay: 'All Day', today: 'Today', previous: 'Back', next: 'Next',
                   month: 'Month', week: 'Week', day: 'Day', agenda: 'Agenda',
@@ -76,20 +75,20 @@ function LedgerPage() {
   const [customers, setCustomers] = useState([]);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true); // Loading customers for dropdown
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(''); // For invoice generation start date filter
+  const [endDate, setEndDate] = useState(''); // For invoice generation end date filter
   const [targetCurrency, setTargetCurrency] = useState('EUR'); // Default or fetch from settings
-  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [issueDate, setIssueDate] = useState(() => new Date().toISOString().split('T')[0]); // Invoice issue date
   const [isGenerating, setIsGenerating] = useState(false); // Invoice generation loading state
   const [generationError, setGenerationError] = useState(null); // Invoice generation error
   const [generationSuccess, setGenerationSuccess] = useState(null); // Invoice generation success message
 
   // Calendar View Control State
-  const [currentDate, setCurrentDate] = useState(new Date()); // Start at current date
-  const [currentView, setCurrentView] = useState(Views.MONTH); // Start in Month view
+  const [currentDate, setCurrentDate] = useState(new Date()); // Calendar current date focus
+  const [currentView, setCurrentView] = useState(Views.MONTH); // Calendar current view (Month, Week, etc.)
 
-  // State to pass default date to Add form
-  const [defaultEntryDate, setDefaultEntryDate] = useState(null); // Date string or null
+  // State to pass default date to Add form when clicking a slot
+  const [defaultEntryDate, setDefaultEntryDate] = useState(null); // Date string (YYYY-MM-DDTHH:mm) or null
 
 
   // --- Data Fetching Logic ---
@@ -98,9 +97,9 @@ function LedgerPage() {
     setIsLoadingCustomers(true);
     setError(null); // Clear previous errors
     try {
-      // Fetch entries and customers concurrently
+      // Fetch ledger entries and customers concurrently
       const [entriesData, customerData] = await Promise.all([
-        getLedgerEntries(), // TODO: Pass filters later based on state
+        getLedgerEntries(), // TODO: Add filters based on state later if needed (e.g., for performance)
         getCustomers()
       ]);
       setEntries(entriesData || []); // Update entries state
@@ -108,20 +107,40 @@ function LedgerPage() {
 
       // Transform ledger entries into the format react-big-calendar expects
       const events = (entriesData || []).map(entry => {
-         const entryDate = new Date(entry.entryDate);
-         // Check for invalid date after parsing
-         if (isNaN(entryDate.getTime())) {
-             console.warn(`Invalid entryDate found for ledger entry ${entry.id}: ${entry.entryDate}`);
-             return null; // Skip invalid entries
+         const startDate = new Date(entry.startDate); // Parse start date
+         // Use endDate if valid, otherwise use startDate (point-in-time)
+         let endDate = entry.endDate ? new Date(entry.endDate) : startDate;
+         if (isNaN(endDate.getTime())) { // Fallback if endDate is invalid
+             endDate = startDate;
          }
+
+         // Handle invalid start date - skip this entry
+         if (isNaN(startDate.getTime())) {
+             console.warn(`Invalid startDate found for ledger entry ${entry.id}: ${entry.startDate}`);
+             return null;
+         }
+
+         // Determine allDay status - treating all as allDay simplifies Month/Week view
+         const isAllDay = true;
+
+         // Adjust end date for multi-day allDay events to render correctly in some views
+         let adjustedEndDate = endDate;
+         if (isAllDay && endDate > startDate) {
+             // If end date time is midnight, add a small duration (e.g., 1 hour)
+             // so react-big-calendar includes the end day visually in Month/Week views
+             if (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getSeconds() === 0) {
+                 adjustedEndDate = new Date(endDate.getTime() + (60 * 60 * 1000)); // Add 1 hour
+             }
+         }
+
          return {
              id: entry.id, // Use ledger entry ID as event ID
              // Create a title for the event display
              title: `${entry.item?.name || '?'} (${entry.customer?.name || '?'}) Q:${entry.quantity}`,
-             start: entryDate, // Start date/time of the event
-             end: entryDate, // End date/time (same as start for point-in-time)
-             allDay: true, // Treat as all-day event for month/week view simplicity
-             resource: entry, // Attach the original ledger entry data
+             start: startDate, // Use parsed start date
+             end: adjustedEndDate, // Use the potentially adjusted end date
+             allDay: isAllDay, // Set allDay status
+             resource: entry, // Attach the original ledger entry data for event handlers
          };
       }).filter(event => event !== null); // Filter out any nulls from invalid dates
       setCalendarEvents(events); // Update the state used by the Calendar component
@@ -134,13 +153,12 @@ function LedgerPage() {
       setIsLoading(false);
       setIsLoadingCustomers(false);
     }
-  //}, [currentLocaleCode]); // Usually don't need to refetch based on locale change here
-}, []); // Empty dependency array means fetch once on mount (unless filters added)
+  }, []); // Empty dependency array means fetch once on mount (unless filters are added)
 
   // Fetch data when component mounts
   useEffect(() => {
     fetchData();
-  }, [fetchData]); // Run when fetchData reference changes
+  }, [fetchData]); // Run when fetchData function reference changes
 
 
   // --- Event Handlers ---
@@ -158,7 +176,7 @@ function LedgerPage() {
   // Callback from AddLedgerEntryForm on successful submission
   const handleAddEntrySuccess = (newEntry) => {
       console.log("Successfully added ledger entry for:", newEntry?.customer?.name);
-      fetchData(); // Refetch all data to update calendar
+      fetchData(); // Refetch all data to update calendar and list
       handleCloseLedgerForm(); // Close the form
   };
 
@@ -176,10 +194,20 @@ function LedgerPage() {
       }
       setIsGenerating(true); // Set loading state for button
       try {
-          const generationData = { customerId: selectedCustomerId, startDate, endDate, issueDate, targetCurrency };
-          const newInvoice = await generateInvoice(generationData); // Call API
+          // Prepare data for API call
+          const generationData = {
+              customerId: selectedCustomerId,
+              startDate,
+              endDate,
+              issueDate,
+              targetCurrency,
+              // dueDate and notes could be added from optional form fields here
+          };
+          const newInvoice = await generateInvoice(generationData); // Call API service
           setGenerationSuccess(`Invoice ${newInvoice.invoiceNumber} generated successfully! Check the Invoices page.`);
-          fetchData(); // Refetch ledger entries to update their billed status in the calendar/list
+          fetchData(); // Refetch ledger entries to update their 'billed' status
+          // Optionally reset form fields after successful generation
+          // setSelectedCustomerId(''); setStartDate(''); setEndDate(''); setIssueDate(new Date().toISOString().split('T')[0]);
       } catch(err) {
           console.error("Invoice generation failed:", err);
           // Display error message from backend response if available
@@ -194,9 +222,9 @@ function LedgerPage() {
   const handleSelectEvent = useCallback((event) => {
     console.log('Selected Event (Raw):', event);
     console.log('Selected Ledger Entry (Resource):', event.resource);
-    // Replace alert with something more user-friendly later (e.g., modal)
+    // Example: Show alert with details (replace with modal later)
     alert(`Selected: ${event.title}\nDate: ${event.start.toLocaleDateString(currentLocaleCode)}\nStatus: ${event.resource.billingStatus}\nNotes: ${event.resource.notes || 'None'}`);
-    // TODO: Implement modal or sidebar to show/edit entry details
+    // TODO: Open an edit modal? Or navigate to a detail view?
   }, [currentLocaleCode]); // Dependency: locale code for alert formatting
 
   // When clicking or dragging on an empty slot in the calendar
@@ -210,7 +238,7 @@ function LedgerPage() {
         const day = start.getDate().toString().padStart(2, '0');
         // Default time to 09:00 when clicking a date slot
         const formattedDate = `${year}-${month}-${day}T09:00`;
-        setDefaultEntryDate(formattedDate); // Set the default date for the form
+        setDefaultEntryDate(formattedDate); // Set the default date state for the form
         setIsAddFormVisible(true);          // Open the form
      }
   }, []); // No external dependencies needed here
@@ -239,12 +267,20 @@ function LedgerPage() {
 
 
   // --- Render Logic ---
-  if (isLoading) { return <div className={styles.loadingMessage}>Loading ledger entries...</div>; }
-  if (error) { return <div className={styles.errorMesssage}>Error: {error}</div>; }
+  // Display loading message while fetching initial data
+  if (isLoading) {
+    return <div className={styles.loadingMessage}>Loading ledger entries...</div>;
+  }
 
+  // Display error message if fetching failed
+  if (error) {
+    return <div className={styles.errorMesssage}>Error: {error}</div>;
+  }
+
+  // Main Page Render
   return (
     <div className={styles.pageContainer}>
-      {/* Header */}
+      {/* Header Section */}
       <div className={styles.header}>
         <h2>Ledger Calendar</h2>
         <p>Visual overview of customer activity.</p>
@@ -253,6 +289,7 @@ function LedgerPage() {
       {/* --- Invoice Generation Section --- */}
       <div className={styles.invoiceGenSection}>
         <h4>Generate Invoice</h4>
+        {/* Show loading message while customers dropdown populates */}
         {isLoadingCustomers ? <p className={styles.loadingMessage}>Loading customers...</p> : (
             <form onSubmit={handleGenerateInvoice}>
                 <div className={styles.genFormGrid}>
@@ -261,38 +298,39 @@ function LedgerPage() {
                         <label htmlFor="genInvCustomer" className={styles.formLabel}>Customer:*</label>
                         <select id="genInvCustomer" value={selectedCustomerId} onChange={e => setSelectedCustomerId(e.target.value)} required className={styles.formSelect}>
                             <option value="" disabled>Select Customer</option>
+                            {/* Map through loaded customers */}
                             {customers.map(c => <option key={c.id} value={c.id}>{c.name} {c.companyName ? `(${c.companyName})` : ''}</option>)}
                         </select>
                     </div>
-                    {/* Start Date */}
+                    {/* Start Date Input */}
                     <div className={styles.formGroup}>
                         <label htmlFor="genInvStart" className={styles.formLabel}>Start Date:*</label>
                         <input id="genInvStart" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required className={styles.formInput} />
                     </div>
-                    {/* End Date */}
+                    {/* End Date Input */}
                      <div className={styles.formGroup}>
                         <label htmlFor="genInvEnd" className={styles.formLabel}>End Date:*</label>
                         <input id="genInvEnd" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required className={styles.formInput} />
                     </div>
-                    {/* Issue Date */}
+                    {/* Issue Date Input */}
                      <div className={styles.formGroup}>
                         <label htmlFor="genInvIssue" className={styles.formLabel}>Issue Date:*</label>
                         <input id="genInvIssue" type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} required className={styles.formInput} />
                     </div>
-                    {/* Target Currency */}
+                    {/* Target Currency Input */}
                      <div className={styles.formGroup}>
                         <label htmlFor="genInvCurrency" className={styles.formLabel}>Target Currency:*</label>
                          <input id="genInvCurrency" type="text" value={targetCurrency} onChange={e => setTargetCurrency(e.target.value.toUpperCase())} required maxLength="3" placeholder="e.g. EUR" className={styles.formInputShort}/>
                     </div>
-                    {/* Submit Button */}
+                    {/* Generate Button */}
                      <div className={styles.formGroup}>
-                        <label className={styles.formLabel}> </label> {/* Spacer */}
+                        <label className={styles.formLabel}> </label> {/* Spacer label for alignment */}
                         <button type="submit" disabled={isGenerating} className={styles.generateButton}>
                             {isGenerating ? 'Generating...' : 'Generate'}
                         </button>
                      </div>
                 </div>
-                 {/* Generation Messages */}
+                 {/* Generation Status Messages */}
                  {generationError && <p className={styles.genErrorMessage}>{generationError}</p>}
                  {generationSuccess && <p className={styles.genSuccessMessage}>{generationSuccess}</p>}
             </form>
@@ -301,13 +339,13 @@ function LedgerPage() {
       {/* --- END INVOICE GEN SECTION --- */}
 
 
-      {/* Add Ledger Entry Button/Form */}
+      {/* Add Ledger Entry Button / Form Section */}
       {!isAddFormVisible ? (
         <button className={styles.addEntryButton} onClick={handleAddEntryClick}>
           + Add Ledger Entry
         </button>
       ) : (
-         // Pass the default date to the form when opened via slot click
+         // Pass the default date state to the form
         <AddLedgerEntryForm
             onAddEntrySuccess={handleAddEntrySuccess}
             onClose={handleCloseLedgerForm}
@@ -319,26 +357,36 @@ function LedgerPage() {
       {/* --- react-big-calendar Component --- */}
       <div className={styles.calendarContainer}>
           <Calendar
-              localizer={localizer}         // From context/memo
-              events={calendarEvents}       // Formatted events
+              // Core properties
+              localizer={localizer}         // Date handling based on locale
+              events={calendarEvents}       // Data to display
               messages={messages}           // Translated UI text
-              culture={currentLocaleCode}   // Current locale
-              startAccessor="start"         // Event object properties
-              endAccessor="end"
-              style={{ height: 600 }}       // Required height style
-              views={['month', 'week', 'day', 'agenda']} // Available views
-              selectable                    // Allow clicking empty slots
+              culture={currentLocaleCode}   // Current locale identifier
+              startAccessor="start"         // Field name for event start
+              endAccessor="end"             // Field name for event end
+              style={{ height: 600 }}       // MUST set height for calendar to render
 
-              // --- Controlled Props ---
-              date={currentDate}          // Control the current date shown
-              view={currentView}          // Control the current view shown
-              onNavigate={handleNavigate} // Handle Today/Back/Next
-              onView={handleView}         // Handle view buttons (Month/Week/Day...)
-              // --- Interaction Handlers ---
-              onSelectEvent={handleSelectEvent} // Handle clicking an existing event
-              onSelectSlot={handleSelectSlot}   // Handle clicking/dragging an empty slot
-              // --- Optional Customization ---
-              // eventPropGetter={ (event) => ({ style: { backgroundColor: event.resource?.billingStatus === 'billed' ? 'lightgreen' : '#eee' } }) }
+              // View control
+              views={['month', 'week', 'day', 'agenda']} // Available views
+              date={currentDate}          // Controlled current date
+              view={currentView}          // Controlled current view
+              onNavigate={handleNavigate} // Callback for date navigation
+              onView={handleView}         // Callback for view change
+
+              // Interactivity
+              selectable                    // Allow clicking/dragging empty slots
+              onSelectEvent={handleSelectEvent} // Callback for clicking an event
+              onSelectSlot={handleSelectSlot}   // Callback for selecting empty slots
+
+              // Optional customization: Style events based on data
+              // eventPropGetter={
+              //     (event, start, end, isSelected) => {
+              //         let newStyle = { backgroundColor: "#eee", color: '#333', borderRadius: "3px", border: "none" };
+              //          if (event.resource?.billingStatus === 'billed') { newStyle.backgroundColor = "#d1e7dd"; newStyle.color = '#0f5132'; }
+              //          else if (event.resource?.billingStatus === 'paid') { newStyle.backgroundColor = "#cfe2ff"; newStyle.color = '#0a58ca'; }
+              //          return { style: newStyle };
+              //     }
+              // }
           />
       </div>
     </div>

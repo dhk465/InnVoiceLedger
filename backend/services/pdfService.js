@@ -1,154 +1,198 @@
 // backend/services/pdfService.js
 const PDFDocument = require('pdfkit');
-const { formatCurrency, formatDate } = require('../utils/formatting'); // Assuming backend utils
+// Use backend formatting utils
+const { formatCurrency, formatDate } = require('../utils/formatting');
 
-// Helper to safely get nested properties
+// Helper to safely get potentially nested properties
 const getSafe = (fn, defaultValue = '') => {
-    try { return fn() ?? defaultValue; } // Use nullish coalescing
+    try { return fn() ?? defaultValue; } // Use nullish coalescing for undefined/null
     catch (e) { return defaultValue; }
 };
 
 // --- PDF Generation Logic ---
-function buildInvoicePDF(invoiceData, stream) { // Accept invoice data and writeable stream
-    const doc = new PDFDocument({
-        size: 'A4',
-        margin: 50 // Margins in points (72 points = 1 inch)
-    });
+function buildInvoicePDF(invoiceData, stream) {
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
 
-    // Pipe the PDF output to the provided stream (e.g., HTTP response)
+    // Pipe output to the stream (e.g., HTTP response)
     doc.pipe(stream);
 
     // --- Helper Variables ---
-    const customer = invoiceData.customer || {}; // Handle missing customer data gracefully
+    const customer = invoiceData.customer || {};
     const items = invoiceData.invoiceItems || [];
-    const baseColor = '#333333'; // Dark gray for text
-    const accentColor = '#0056b3'; // Darker blue for headers/accents
+    const invoiceCurrency = invoiceData.currency || 'N/A'; // Get invoice currency
+    // Colors
+    const baseColor = '#333333';
+    const accentColor = '#0056b3';
     const lightGrayColor = '#888888';
-    const tableHeaderColor = '#F1F3F5'; // Light gray background
+    const tableHeaderColor = '#F1F3F5';
 
     // --- Document Header ---
     doc.fontSize(22).fillColor(accentColor).text('INVOICE', { align: 'right' });
     doc.moveDown(0.5);
-    doc.fontSize(11).fillColor(baseColor).text(`Invoice #: ${invoiceData.invoiceNumber}`, { align: 'right' });
+    doc.fontSize(11).fillColor(baseColor).text(`Invoice #: ${invoiceData.invoiceNumber || 'N/A'}`, { align: 'right' });
     doc.text(`Issue Date: ${formatDate(invoiceData.issueDate)}`, { align: 'right' });
     doc.text(`Due Date: ${formatDate(invoiceData.dueDate)}`, { align: 'right' });
 
-    // --- Business Details (Later from Settings Snapshot) ---
-    // Placeholder - Replace with actual snapshot data later
+    // --- Business Details (Placeholder - Use invoiceData.businessDetailsSnapshot later) ---
     doc.moveDown(1.5);
-    doc.fontSize(12).fillColor(accentColor).text('Your Business Name', { continued: false }); // Reset continued state
-    doc.fontSize(10).fillColor(lightGrayColor).text('Your Street Address');
-    doc.text('Your City, Post Code');
+    doc.fontSize(12).fillColor(accentColor).text('Your Business Name Placeholder', { continued: false });
+    doc.fontSize(10).fillColor(lightGrayColor).text('123 Your Street');
+    doc.text('Your City, YPC 123');
     doc.text('Your Country');
-    doc.text('VAT ID: YOUR_VAT_ID'); // Replace with actual VAT ID
-    doc.text('Email: your.email@example.com');
-    doc.text('Phone: +12 345 678 90');
+    doc.text('VAT ID: YOUR_VAT_ID_HERE');
+    doc.text('Email: contact@yourbusiness.com');
+    doc.text('Phone: +XX XXX XXX XXX');
 
     // --- Bill To Section ---
-    const billToY = doc.y; // Save Y position to align horizontally later if needed
-    const billToX = 300; // Start Bill To further right
-    doc.fontSize(12).fillColor(accentColor).text('Bill To:', billToX, billToY - 22, { continued: false }); // Position title
+    const billToY = doc.y;
+    const billToX = 300; // Start further right
+    doc.fontSize(12).fillColor(accentColor).text('Bill To:', billToX, billToY - 22, { continued: false });
     doc.fontSize(10).fillColor(baseColor);
     doc.text(getSafe(() => customer.name), billToX);
     if (customer.companyName) doc.text(customer.companyName, billToX);
-    if (customer.address) doc.text(getSafe(() => customer.address.replace(/\r\n/g, '\n')), billToX); // Handle line breaks
+    // Handle potential line breaks in address safely
+    if (customer.address) doc.text(getSafe(() => customer.address.replace(/\r\n/g, '\n')), billToX);
     if (customer.vatId) doc.text(`VAT ID: ${customer.vatId}`, billToX);
     if (customer.email) doc.text(`Email: ${customer.email}`, billToX);
+    if (customer.phone) doc.text(`Phone: ${customer.phone}`, billToX);
+
 
     doc.moveDown(3); // Space before table
 
     // --- Line Items Table ---
     const tableTopY = doc.y;
-    const itemColX = 50;
-    const qtyColX = 300;
-    const unitPriceColX = 350;
-    const totalColX = 450; // Adjust positions as needed
-    const rowHeight = 25; // Approximate height per row
+    // Define column starting X positions
+    const itemColX = 50;        // Start of Item Description
+    const qtyColX = 280;        // Start of Quantity
+    const unitColX = 320;       // Start of Unit
+    const unitPriceColX = 370;  // Start of Unit Price (Converted)
+    const totalColX = 470;      // Start of Line Total (Converted)
+    const tableEndX = totalColX + 80; // End X position for lines/rects
 
-    // Table Header
-    doc.fontSize(10).fillColor(baseColor);
-    doc.rect(itemColX - 10, tableTopY, (totalColX + 100) - (itemColX - 10), rowHeight).fill(tableHeaderColor);
-    doc.fillColor(baseColor).font('Helvetica-Bold'); // Bold headers
-    doc.text('Item / Description', itemColX, tableTopY + 7); // Adjust Y offset for vertical centering
-    doc.text('Qty', qtyColX, tableTopY + 7, { width: 40, align: 'right' });
-    doc.text('Unit Price', unitPriceColX, tableTopY + 7, { width: 80, align: 'right' });
-    doc.text('Total', totalColX, tableTopY + 7, { width: 90, align: 'right' });
+    const rowHeight = 20; // Base row height
+    const headerPadding = 5; // Padding inside header cells
+    const cellPadding = 5;   // Padding inside data cells
+
+    // Draw Table Header Background
+    doc.rect(itemColX - cellPadding, tableTopY, tableEndX - (itemColX - cellPadding), rowHeight).fill(tableHeaderColor);
+
+    // Draw Table Header Text
+    doc.fontSize(9).fillColor(baseColor).font('Helvetica-Bold');
+    doc.text('Item / Description', itemColX, tableTopY + headerPadding);
+    doc.text('Qty', qtyColX, tableTopY + headerPadding, { width: unitColX - qtyColX - cellPadding, align: 'right' });
+    doc.text('Unit', unitColX, tableTopY + headerPadding, { width: unitPriceColX - unitColX - cellPadding, align: 'left' });
+    // --- UPDATED: Added Unit Price Header ---
+    doc.text(`Unit Price (${invoiceCurrency})`, unitPriceColX, tableTopY + headerPadding, { width: totalColX - unitPriceColX - cellPadding, align: 'right' });
+    // --- END UPDATE ---
+    doc.text(`Total (${invoiceCurrency})`, totalColX, tableTopY + headerPadding, { width: tableEndX - totalColX - cellPadding, align: 'right' });
     doc.font('Helvetica'); // Reset font
 
+
     // Table Rows
-    let currentY = tableTopY + rowHeight;
+    let currentY = tableTopY + rowHeight; // Start Y position for first row content
     items.forEach((item, index) => {
-        // Draw line separator (optional)
-        doc.moveTo(itemColX - 10, currentY).lineTo(totalColX + 100, currentY).lineWidth(0.5).strokeColor('#DDDDDD').stroke();
+        // Determine maximum height needed for this row (based on description)
+        const descWidth = qtyColX - itemColX - cellPadding;
+        const descHeight = doc.heightOfString(item.description, { width: descWidth });
+        // Add extra height for conversion details if needed
+        const conversionText = (item.originalCurrency && item.originalCurrency !== invoiceCurrency)
+            ? `(Orig: ${formatCurrency(item.originalUnitPriceWithoutVAT, item.originalCurrency)} @ ${parseFloat(item.exchangeRateUsed || 0).toFixed(4)})`
+            : '';
+        const conversionHeight = conversionText ? doc.heightOfString(conversionText, { width: descWidth, fontSize: 7 }) + 2 : 0;
+        const currentRowHeight = Math.max(rowHeight, descHeight + conversionHeight + (cellPadding * 2)); // Ensure minimum height + padding
 
-        doc.fillColor(baseColor).fontSize(9); // Smaller font for items
-        // Description (handle potential line breaks)
-        const descHeight = doc.heightOfString(item.description, { width: qtyColX - itemColX - 10 });
-        doc.text(item.description, itemColX, currentY + 7, { width: qtyColX - itemColX - 10 });
-
-        // Other columns
-        doc.text(item.quantity, qtyColX, currentY + 7, { width: 40, align: 'right' });
-        // Show converted unit price
-        doc.text(formatCurrency(item.unitPriceWithoutVAT, invoiceData.currency), unitPriceColX, currentY + 7, { width: 80, align: 'right' });
-        // Show final line total
-        doc.text(formatCurrency(item.lineTotalWithVAT, invoiceData.currency), totalColX, currentY + 7, { width: 90, align: 'right' });
-
-        // Add details about original currency/rate below description if needed
-        if (item.originalCurrency && item.originalCurrency !== invoiceData.currency) {
-             doc.fontSize(7).fillColor(lightGrayColor).text(
-                `(Orig: ${formatCurrency(item.originalUnitPriceWithoutVAT, item.originalCurrency)}/unit @ ${parseFloat(item.exchangeRateUsed).toFixed(4)})`,
-                itemColX, currentY + 7 + descHeight + 2 , // Position below description
-                { width: qtyColX - itemColX - 10, lineBreak: false }
-             );
-        }
-
-        // Calculate dynamic row height based on description and extra details
-        const detailsHeight = (item.originalCurrency && item.originalCurrency !== invoiceData.currency) ? 12 : 0;
-        currentY += Math.max(rowHeight - 10, descHeight + detailsHeight) + 10; // Ensure minimum height and add padding
-
-        // --- Page Break Logic (Basic) ---
-        // Estimate if next row fits, if not, add new page
-        // A more robust solution involves measuring precisely or using libraries
-        if (currentY > doc.page.height - doc.page.margins.bottom - 50) { // If near bottom margin
+        // --- Page Break Logic ---
+        if (currentY + currentRowHeight > doc.page.height - doc.page.margins.bottom - 50) { // Check if row fits before drawing
             doc.addPage();
-            currentY = doc.page.margins.top; // Reset Y to top margin
-            // Redraw headers on new page if desired (optional)
+            currentY = doc.page.margins.top; // Reset Y
+            // Optionally redraw headers on new page
+            doc.rect(itemColX - cellPadding, currentY, tableEndX - (itemColX - cellPadding), rowHeight).fill(tableHeaderColor);
+            doc.fontSize(9).fillColor(baseColor).font('Helvetica-Bold');
+            doc.text('Item / Description', itemColX, currentY + headerPadding); // Re-draw headers
+            doc.text('Qty', qtyColX, currentY + headerPadding, { width: unitColX - qtyColX - cellPadding, align: 'right' });
+            doc.text('Unit', unitColX, currentY + headerPadding, { width: unitPriceColX - unitColX - cellPadding, align: 'left' });
+            doc.text(`Unit Price (${invoiceCurrency})`, unitPriceColX, currentY + headerPadding, { width: totalColX - unitPriceColX - cellPadding, align: 'right' });
+            doc.text(`Total (${invoiceCurrency})`, totalColX, currentY + headerPadding, { width: tableEndX - totalColX - cellPadding, align: 'right' });
+            doc.font('Helvetica');
+            currentY += rowHeight; // Advance Y after header
         }
+        // --- End Page Break Logic ---
+
+        // Draw row background/borders (optional - or just horizontal lines)
+        doc.moveTo(itemColX - cellPadding, currentY).lineTo(tableEndX, currentY).lineWidth(0.5).strokeColor('#DDDDDD').stroke(); // Top line
+
+        // Draw Cell Content
+        doc.fillColor(baseColor).fontSize(9);
+        const textY = currentY + cellPadding; // Y position for text inside row
+
+        // Description
+        doc.text(item.description, itemColX, textY, { width: descWidth });
+        // Display conversion details below description if applicable
+        if (conversionText) {
+            doc.fontSize(7).fillColor(lightGrayColor).text(conversionText, itemColX, textY + descHeight + 2, { width: descWidth });
+        }
+
+        // Quantity
+        doc.text(item.quantity, qtyColX, textY, { width: unitColX - qtyColX - cellPadding, align: 'right' });
+        // Unit
+        doc.text(item.unit, unitColX, textY, { width: unitPriceColX - unitColX - cellPadding, align: 'left' });
+        // --- UPDATED: Add Converted Unit Price Column ---
+        doc.text(formatCurrency(item.unitPriceWithoutVAT, invoiceCurrency), unitPriceColX, textY, { width: totalColX - unitPriceColX - cellPadding, align: 'right' });
+        // --- END UPDATE ---
+        // Line Total (Converted)
+        doc.text(formatCurrency(item.lineTotalWithVAT, invoiceCurrency), totalColX, textY, { width: tableEndX - totalColX - cellPadding, align: 'right' });
+
+
+        // Advance Y position for the next row
+        currentY += currentRowHeight;
     });
-     // Draw final bottom line
-    doc.moveTo(itemColX - 10, currentY).lineTo(totalColX + 100, currentY).lineWidth(0.5).strokeColor('#DDDDDD').stroke();
+    // Draw final bottom line for the table
+    doc.moveTo(itemColX - cellPadding, currentY).lineTo(tableEndX, currentY).lineWidth(0.5).strokeColor('#DDDDDD').stroke();
 
 
     // --- Totals Section ---
-    const totalsY = currentY + 20;
-    doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('Subtotal (excl. VAT):', totalColX - 100, totalsY, { width: 100, align: 'right' });
-    doc.font('Helvetica').text(formatCurrency(invoiceData.subtotalWithoutVAT, invoiceData.currency), totalColX, totalsY, { width: 90, align: 'right' });
+    // Position totals below the table, aligned right
+    const totalsStartY = currentY + 20; // Add some space after the table
+    const labelX = totalColX - 100; // X position for labels like "Subtotal:"
+    const valueX = totalColX; // X position for the amounts
+    const totalsWidth = tableEndX - labelX; // Width for alignment
 
-    doc.font('Helvetica-Bold').text('Total VAT:', totalColX - 100, totalsY + 15, { width: 100, align: 'right' });
-    doc.font('Helvetica').text(formatCurrency(invoiceData.totalVATAmount, invoiceData.currency), totalColX, totalsY + 15, { width: 90, align: 'right' });
+    doc.fontSize(10).font('Helvetica');
+    doc.text('Subtotal (excl. VAT):', labelX, totalsStartY, { width: 100, align: 'right' });
+    doc.text(formatCurrency(invoiceData.subtotalWithoutVAT, invoiceCurrency), valueX, totalsStartY, { width: tableEndX - valueX - cellPadding, align: 'right' });
+
+    doc.text('Total VAT:', labelX, totalsStartY + 15, { width: 100, align: 'right' });
+    doc.text(formatCurrency(invoiceData.totalVATAmount, invoiceCurrency), valueX, totalsStartY + 15, { width: tableEndX - valueX - cellPadding, align: 'right' });
 
     doc.moveDown(0.5); // Add slight space
 
-    doc.font('Helvetica-Bold').fontSize(11).text('Grand Total:', totalColX - 100, totalsY + 35, { width: 100, align: 'right' });
-    doc.font('Helvetica-Bold').text(formatCurrency(invoiceData.grandTotal, invoiceData.currency), totalColX, totalsY + 35, { width: 90, align: 'right' });
+    // Grand Total - Bolder
+    doc.font('Helvetica-Bold').fontSize(11);
+    doc.text('Grand Total:', labelX, totalsStartY + 35, { width: 100, align: 'right' });
+    doc.text(formatCurrency(invoiceData.grandTotal, invoiceCurrency), valueX, totalsStartY + 35, { width: tableEndX - valueX - cellPadding, align: 'right' });
 
     doc.font('Helvetica'); // Reset font
 
+
     // --- Notes Section ---
     if (invoiceData.notes) {
+        // Position notes potentially below totals or wherever makes sense
         doc.moveDown(2);
-        doc.fontSize(10).text('Notes:', 50, doc.y);
-        doc.fillColor(lightGrayColor).text(invoiceData.notes, { indent: 10 });
+        const notesY = doc.y;
+        doc.fontSize(10).fillColor(baseColor).text('Notes:', 50, notesY);
+        doc.fillColor(lightGrayColor).text(invoiceData.notes, 50, notesY + 15, { // Indent note content slightly
+            width: doc.page.width - 100 // Use available width
+        });
     }
 
     // --- Footer (Optional) ---
-    // doc.fontSize(8).fillColor(lightGrayColor)
-    //     .text('Thank you for your business!', 50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
+    doc.fontSize(8).fillColor(lightGrayColor)
+        .text('Thank you for your business!', 50, doc.page.height - 30, { align: 'center', width: doc.page.width - 100 });
 
 
-    // Finalize the PDF document
+    // Finalize the PDF document - triggers piping to the stream
     doc.end();
 }
 
+// Export the builder function
 module.exports = { buildInvoicePDF };
