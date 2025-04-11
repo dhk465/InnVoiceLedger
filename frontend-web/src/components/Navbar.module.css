@@ -84,5 +84,15 @@
     background-color: #c82333; /* Darker red on hover */
 }
 
+/* Locale Switcher Style */
+.localeSelect {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+
 /* IMPORTANT: Remove any @media queries or .hideOnMobile classes for now */
 /* Ensure no styles are accidentally hiding the elements on all screen sizes */

@@ -2,58 +2,68 @@
 
 /**
  * Formats a number as currency according to Intl standards.
- * @param {number|string|null|undefined} amount - The numerical amount.
- * @param {string|null|undefined} currencyCode - The 3-letter ISO currency code.
- * @param {string} locale - Optional locale string (e.g., 'cs-CZ', 'en-US'), defaults to 'en'.
+ * @param {number|string|null|undefined} amount
+ * @param {string|null|undefined} currencyCode - 3-letter ISO code.
+ * @param {string} [localeCode='en-US'] - BCP 47 locale code (e.g., 'cs-CZ', 'ko-KR').
  * @returns {string} - Formatted currency string or fallback.
  */
-export const formatCurrency = (amount, currencyCode, locale = 'en') => {
+export const formatCurrency = (amount, currencyCode, localeCode = 'en-US') => {
     const numAmount = parseFloat(amount);
-    // Basic validation for amount and currency code
     if (isNaN(numAmount) || typeof currencyCode !== 'string' || currencyCode.length !== 3) {
         const rawAmount = amount != null ? String(amount) : '-';
         const rawCurrency = currencyCode != null ? String(currencyCode) : '';
-        // Simple fallback if inputs are bad
         return `${rawAmount} ${rawCurrency}`.trim();
     }
-
     try {
-        // Use Intl.NumberFormat for proper localization
-        return new Intl.NumberFormat(locale, {
+        // Use provided localeCode
+        return new Intl.NumberFormat(localeCode, {
             style: 'currency',
             currency: currencyCode,
-            minimumFractionDigits: 2, // Standard for most currencies
+            minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }).format(numAmount);
     } catch (e) {
-        // Fallback if Intl doesn't support the currency code or locale
-        console.warn(`Could not format currency ${currencyCode} with locale ${locale}:`, e);
-        // Provide a basic fallback format
-        return `${numAmount.toFixed(2)} ${currencyCode}`;
+        console.warn(`Could not format currency ${currencyCode} with locale ${localeCode}:`, e);
+        return `${numAmount.toFixed(2)} ${currencyCode}`; // Fallback
     }
 };
 
 /**
- * Formats a date string (YYYY-MM-DD or full ISO) into a locale-specific short date.
- * @param {string|null|undefined} dateString - The date string to format.
- * @param {string} locale - Optional locale string, defaults to undefined (browser default).
+ * Formats a date string into a locale-specific short date.
+ * @param {string|null|undefined} dateString - YYYY-MM-DD or ISO string.
+ * @param {string} [localeCode=undefined] - BCP 47 locale code, uses browser default if undefined.
  * @returns {string} - Formatted date string or fallback.
  */
-export const formatDate = (dateString, locale = undefined) => {
+export const formatDate = (dateString, localeCode = undefined) => {
     if (!dateString) return '-';
     try {
-        // Add time part if only date is provided, assume UTC to avoid timezone shifts during parsing
         const date = new Date(dateString.includes('T') ? dateString : dateString + 'T00:00:00Z');
-        return date.toLocaleDateString(locale, {
-            year: 'numeric',
-            month: 'short', // Or '2-digit'
-            day: 'numeric',
-            timeZone: 'UTC' // Display date based on UTC input, prevents off-by-one day issues
+         if (isNaN(date.getTime())) throw new Error("Invalid Date");
+        // Use provided localeCode
+        return date.toLocaleDateString(localeCode, {
+            year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'
         });
     } catch (e) {
-        console.warn(`Could not format date ${dateString}:`, e);
-        return dateString; // Fallback to original string
+        console.warn(`Could not format date ${dateString} with locale ${localeCode}:`, e);
+        return dateString;
     }
 };
 
-// Add other formatting functions here (datetime, numbers, etc.)
+/**
+ * Formats a date string into a locale-specific short date and time.
+ * @param {string|null|undefined} dateString - ISO string preferred.
+ * @param {string} [localeCode=undefined] - BCP 47 locale code.
+ * @returns {string} - Formatted datetime string or fallback.
+ */
+export const formatDateTime = (dateString, localeCode = undefined) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+       if (isNaN(date.getTime())) throw new Error("Invalid Date");
+      // Use provided localeCode
+      return date.toLocaleString(localeCode, { dateStyle: 'short', timeStyle: 'short' });
+    } catch (e) {
+        console.warn(`Could not format datetime string "${dateString}" with locale ${localeCode}:`, e);
+        return dateString; // Fallback
+    }
+};

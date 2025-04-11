@@ -1,6 +1,6 @@
 /* frontend-web/src/pages/LedgerPage.module.css */
 
-/* Basic page layout */
+/* --- Page Layout & Header --- */
 .pageContainer {
   padding: 1rem;
 }
@@ -13,94 +13,144 @@
 .header h2 { margin-bottom: 0.5rem; color: #212529; }
 .header p { color: #495057; }
 
-/* Invoice Generation Section */
+
+/* --- Invoice Generation Section --- */
 .invoiceGenSection {
   border: 1px solid #e0e0e0;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.5rem; /* Consistent padding */
   margin-bottom: 1.5rem;
-  background-color: #fdfdfd;
-  border-radius: 4px;
+  background-color: #f8f9fa; /* Light background */
+  border-radius: 5px; /* Slightly rounded corners */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
 }
 .invoiceGenSection h4 {
     margin-top: 0;
     margin-bottom: 1rem;
     color: #343a40;
+    font-weight: 600;
+    border-bottom: 1px solid #eee; /* Separator */
+    padding-bottom: 0.5rem;
 }
 
+/* Layout for the form elements within generation section */
 .genFormGrid {
     display: flex;
-    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
-    gap: 1rem; /* Spacing between form groups */
-    align-items: flex-end; /* Align items to the bottom (useful for button) */
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 1rem 1.5rem; /* Row gap and column gap */
+    align-items: flex-end; /* Align button nicely */
 }
 
+/* Grouping for label + input */
 .formGroup {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem; /* Space between label and input */
-    flex-grow: 1; /* Allow groups to grow */
-    min-width: 150px; /* Minimum width for inputs */
+    gap: 0.25rem;
+    flex-grow: 1; /* Allow groups to take available space */
+    min-width: 140px; /* Minimum width */
 }
 
+/* Style for labels */
 .formLabel {
     font-weight: 500;
-    font-size: 0.9em;
+    font-size: 0.85em; /* Slightly smaller label */
     color: #495057;
+    display: block; /* Ensure it takes its own line if needed */
+}
+/* Empty label used for spacing */
+.formLabel:empty {
+    height: 0.85em; /* Match font-size roughly */
 }
 
+
+/* Base style for inputs and selects in this section */
 .formInput, .formSelect {
-    padding: 0.5rem;
+    padding: 0.5rem 0.6rem;
     border: 1px solid #ced4da;
     border-radius: 4px;
     font-size: 0.95rem;
-    width: 100%; /* Make inputs fill their group */
+    width: 100%;
     box-sizing: border-box;
+    background-color: #fff; /* Ensure white background */
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
-.formInputShort { /* For currency input */
-     composes: formInput; /* Inherit base styles */
-     max-width: 100px;
-     text-transform: uppercase;
+.formInput:focus, .formSelect:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
+/* Shorter input specifically for currency */
+.formInputShort {
+     composes: formInput; /* Inherit base styles - may show editor warning */
+     max-width: 100px; /* Limit width */
+     text-transform: uppercase;
+}
+/* Alternative if 'composes' causes issues or warnings */
+/*
+.formInputShort {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+    background-color: #fff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    max-width: 100px;
+    text-transform: uppercase;
+}
+.formInputShort:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+*/
+
+
+/* Generate Invoice Button */
 .generateButton {
-    background-color: #198754; /* Bootstrap success green */
+    background-color: #198754; /* Success green */
     color: white;
-    padding: 0.55rem 1rem; /* Slightly adjust padding to align better */
+    padding: 0.55rem 1rem; /* Align height with inputs */
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.95rem;
+    font-weight: 500;
     transition: background-color 0.2s ease-in-out;
-    height: calc(1.5em + 1rem + 2px); /* Match input height roughly */
+    white-space: nowrap; /* Prevent wrapping */
+    height: calc(1.5em + 1rem + 2px); /* Match input height */
     line-height: 1.5;
 }
 .generateButton:hover:not(:disabled) {
-    background-color: #157347;
+    background-color: #157347; /* Darker green */
 }
 .generateButton:disabled {
     background-color: #a0a0a0;
     cursor: not-allowed;
 }
 
+/* Invoice Generation Status Messages */
 .genErrorMessage {
-    color: #dc3545;
-    margin-top: 0.75rem;
-    font-size: 0.9em;
-    font-weight: 500;
-    width: 100%; /* Span full width below grid */
-}
-.genSuccessMessage {
-    color: #198754;
+    color: #dc3545; /* Danger red */
     margin-top: 0.75rem;
     font-size: 0.9em;
     font-weight: 500;
     width: 100%;
+    text-align: left; /* Align left within the form area */
+}
+.genSuccessMessage {
+    color: #198754; /* Success green */
+    margin-top: 0.75rem;
+    font-size: 0.9em;
+    font-weight: 500;
+    width: 100%;
+    text-align: left;
 }
 
 
-/* Add Entry Button */
+/* --- Add Ledger Entry Button --- */
 .addEntryButton {
-  background-color: #0d6efd; /* Slightly different blue? */
+  background-color: #0d6efd; /* Primary blue */
   color: #ffffff;
   padding: 0.6rem 1.2rem;
   border: none;
@@ -116,45 +166,32 @@
   outline: none;
 }
 
-/* Ledger Table Styles */
-.ledgerTable {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  font-size: 0.9rem; /* Slightly smaller font */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-  background-color: #ffffff;
+/* --- Calendar Container --- */
+.calendarContainer {
+  margin-top: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
+/* You can add overrides for react-big-calendar default styles here if needed */
+/* e.g., .calendarContainer :global(.rbc-event) { background-color: #yourcolor; } */
 
-.ledgerTable th,
-.ledgerTable td {
-  border: 1px solid #dee2e6;
-  padding: 0.6rem 0.75rem; /* Adjust padding */
-  text-align: left;
-  vertical-align: middle;
-  color: #212529;
-}
 
-.ledgerTable th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-.ledgerTable tbody tr:hover {
-  background-color: #f1f3f5;
-}
-
-/* Alignment rules */
-.ledgerTable td:nth-child(4) { text-align: right; } /* Quantity */
-.ledgerTable td:nth-child(7) { text-align: center; } /* Status */
-
-.noEntriesRow td {
-    text-align: center;
+/* --- Loading / Error Messages (Shared) --- */
+.loadingMessage {
     font-style: italic;
     color: #6c757d;
-    padding: 1.5rem;
+    padding: 1rem;
+    text-align: center;
 }
 
-/* Shared loading/error styles */
-.loadingMessage { font-style: italic; color: #6c757d; padding: 1rem; }
-.errorMesssage { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+.errorMesssage {
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+}

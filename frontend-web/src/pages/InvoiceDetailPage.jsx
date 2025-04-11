@@ -1,18 +1,25 @@
 // src/pages/InvoiceDetailPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom'; // Import useParams to get ID from URL
-import { getInvoiceById } from '../services/apiService';
-import { formatCurrency, formatDate } from '../utils/formatting'; // Use formatting helpers
-import styles from './InvoiceDetailPage.module.css'; // Create CSS Module
+import { useParams, Link } from 'react-router-dom';
+import { getInvoiceById, getInvoicePdfUrl } from '../services/apiService'; // Added getInvoicePdfUrl
+// --- Import useLocale hook ---
+import { useLocale } from '../contexts/LocaleContext';
+// --- Import centralized formatting functions ---
+import { formatCurrency, formatDate } from '../utils/formatting';
+// --- Import CSS Module ---
+import styles from './InvoiceDetailPage.module.css';
 
 function InvoiceDetailPage() {
-    const { id: invoiceId } = useParams(); // Get the 'id' parameter from the route '/invoices/:id'
+    const { id: invoiceId } = useParams();
     const [invoice, setInvoice] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    // --- Get current locale code from context ---
+    const { currentLocaleCode } = useLocale();
 
+    // Fetch invoice details function
     const fetchInvoiceDetails = useCallback(async () => {
-        if (!invoiceId) return; // Don't fetch if ID is missing
+        if (!invoiceId) return;
         setIsLoading(true);
         setError(null);
         try {
@@ -24,19 +31,33 @@ function InvoiceDetailPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [invoiceId]); // Dependency: fetch when invoiceId changes
+    }, [invoiceId]); // Re-fetch if invoiceId changes
 
+    // Fetch data on mount
     useEffect(() => {
         fetchInvoiceDetails();
     }, [fetchInvoiceDetails]);
 
+    // --- Download Handler ---
+    const handleDownloadClick = () => {
+        if (!invoiceId) return;
+        try {
+            const pdfUrl = getInvoicePdfUrl(invoiceId);
+            window.open(pdfUrl, '_blank'); // Open PDF link in new tab
+        } catch (err) {
+            console.error("Error getting PDF URL:", err);
+            alert("Could not generate download link.");
+        }
+    };
+    // --- End Download Handler ---
+
+
     // --- Render Logic ---
     if (isLoading) { return <div className={styles.loadingMessage}>Loading invoice details...</div>; }
     if (error) { return <div className={styles.errorMesssage}>Error: {error}</div>; }
-    if (!invoice) { return <div className={styles.errorMesssage}>Invoice data could not be loaded.</div>; } // Should be caught by error state generally
+    if (!invoice) { return <div className={styles.errorMesssage}>Invoice data could not be loaded.</div>; }
 
-    // --- Display Invoice Details ---
-    const { customer } = invoice; // Destructure customer for easier access
+    const { customer } = invoice; // Destructure for convenience
 
     return (
         <div className={styles.pageContainer}>
@@ -44,6 +65,9 @@ function InvoiceDetailPage() {
 
             <div className={styles.invoiceHeader}>
                 <h1>Invoice #{invoice.invoiceNumber}</h1>
+                {/* --- Added Download Button --- */}
+                <button onClick={handleDownloadClick} className={styles.downloadButton}>Download PDF</button>
+                {/* --- End Add --- */}
                 <div className={styles.status}>Status: {invoice.status}</div>
             </div>
 
@@ -61,10 +85,11 @@ function InvoiceDetailPage() {
 
                 {/* Invoice Meta Details */}
                 <div className={styles.metaDetails}>
-                    <p><strong>Issue Date:</strong> {formatDate(invoice.issueDate)}</p>
-                    <p><strong>Due Date:</strong> {formatDate(invoice.dueDate)}</p>
+                    {/* Use locale for date formatting */}
+                    <p><strong>Issue Date:</strong> {formatDate(invoice.issueDate, currentLocaleCode)}</p>
+                    <p><strong>Due Date:</strong> {formatDate(invoice.dueDate, currentLocaleCode)}</p>
                     <p><strong>Currency:</strong> {invoice.currency}</p>
-                    {/* Add Business Details Snapshot here later */}
+                    {/* TODO: Add Business Details Snapshot Display */}
                 </div>
             </div>
 
@@ -89,20 +114,21 @@ function InvoiceDetailPage() {
                             <td>{item.description}</td>
                             <td className={styles.centerAlign}>{item.quantity}</td>
                             <td className={styles.centerAlign}>{item.unit}</td>
-                            {/* Show original price/currency */}
+                            {/* Use locale for original price currency formatting */}
                             <td className={styles.rightAlign}>
-                                {formatCurrency(item.originalUnitPriceWithoutVAT, item.originalCurrency)}
+                                {formatCurrency(item.originalUnitPriceWithoutVAT, item.originalCurrency, currentLocaleCode)}
                             </td>
-                            {/* Show rate if conversion happened */}
+                            {/* Exchange Rate */}
                             <td className={styles.centerAlign}>{item.exchangeRateUsed ? parseFloat(item.exchangeRateUsed).toFixed(4) : '-'}</td>
-                            {/* Show converted unit price */}
+                            {/* Use locale for converted unit price formatting */}
                             <td className={styles.rightAlign}>
-                                {formatCurrency(item.unitPriceWithoutVAT, invoice.currency)}
+                                {formatCurrency(item.unitPriceWithoutVAT, invoice.currency, currentLocaleCode)}
                             </td>
+                            {/* VAT Rate */}
                             <td className={styles.rightAlign}>{parseFloat(item.originalVatRate).toFixed(2)}%</td>
-                            {/* Show final line total */}
+                            {/* Use locale for final line total formatting */}
                             <td className={styles.rightAlign}>
-                                {formatCurrency(item.lineTotalWithVAT, invoice.currency)}
+                                {formatCurrency(item.lineTotalWithVAT, invoice.currency, currentLocaleCode)}
                             </td>
                         </tr>
                     ))}
@@ -111,9 +137,10 @@ function InvoiceDetailPage() {
 
             {/* Invoice Totals */}
             <div className={styles.totalsSection}>
-                <p><strong>Subtotal (excl. VAT):</strong> {formatCurrency(invoice.subtotalWithoutVAT, invoice.currency)}</p>
-                <p><strong>Total VAT:</strong> {formatCurrency(invoice.totalVATAmount, invoice.currency)}</p>
-                <h3><strong>Grand Total:</strong> {formatCurrency(invoice.grandTotal, invoice.currency)}</h3>
+                {/* Use locale for totals currency formatting */}
+                <p><strong>Subtotal (excl. VAT):</strong> {formatCurrency(invoice.subtotalWithoutVAT, invoice.currency, currentLocaleCode)}</p>
+                <p><strong>Total VAT:</strong> {formatCurrency(invoice.totalVATAmount, invoice.currency, currentLocaleCode)}</p>
+                <h3><strong>Grand Total:</strong> {formatCurrency(invoice.grandTotal, invoice.currency, currentLocaleCode)}</h3>
             </div>
 
              {/* Invoice Notes */}
@@ -124,8 +151,6 @@ function InvoiceDetailPage() {
                  </div>
              )}
 
-            {/* Add Download Button later */}
-            {/* <button>Download PDF</button> */}
         </div>
     );
 }

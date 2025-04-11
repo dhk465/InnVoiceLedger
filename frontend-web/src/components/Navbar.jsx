@@ -6,10 +6,14 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import styles from './Navbar.module.css';
 // Import auth context hook
 import { useAuth } from '../contexts/AuthContext';
+// Import locale
+import { useLocale } from '../contexts/LocaleContext';
 
 function Navbar() {
   // Get user and logout function from context
   const { logout, user } = useAuth();
+  // Get locale context functions/data
+  const { currentLocaleCode, supportedLocales, changeLocale } = useLocale();
   // Hook for programmatic navigation (after logout)
   const navigate = useNavigate();
 
@@ -22,6 +26,11 @@ function Navbar() {
   const handleLogout = () => {
     logout(); // Call context logout function
     navigate('/login'); // Redirect to login page
+  };
+
+  // Handle locale change
+  const handleLocaleChange = (event) => {
+    changeLocale(event.target.value);
   };
 
   return (
@@ -43,6 +52,17 @@ function Navbar() {
       <div className={styles.navActions}>
           {/* Display user email if user object exists */}
           {user && <span className={styles.userInfo}>Logged in as: {user.email}</span>}
+
+          {/* --- Locale Switcher --- */}
+          <select value={currentLocaleCode} onChange={handleLocaleChange} className={styles.localeSelect}>
+              {supportedLocales.map(locale => (
+                  <option key={locale.code} value={locale.code}>
+                      {locale.name} {/* Display language name */}
+                  </option>
+              ))}
+          </select>
+          {/* --- End Locale Switcher --- */}
+
           {/* Logout button */}
           <button onClick={handleLogout} className={styles.logoutButton}>
               Logout
